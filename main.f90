@@ -3,11 +3,12 @@ Program main
 
     implicit none 
     
-    integer :: allocerr,iter,intIter,predictedDays,i,j,r,i4_choose,vk,dimImin
-    integer, parameter :: n = 3,maxIter = 1000,maxIntIter = 1000,nzMaxImin = 10
-    real, parameter :: alpha = 0.5d0,epsilon = 1.0d-7
-    real(kind=8), allocatable :: sk(:),xk(:),xtrial(:),dFmin(:),faux(:),gaux(:),indices(:)
-    real(kind=8) :: lambda,fxk,fxtrial,aux,optCond,sigma
+    integer :: allocerr,iter,int_iter,i,j,r,i4_choose
+    integer, parameter :: n = 4,maxIter = 1000,maxIntIter = 1000
+    real, parameter :: alpha = 0.5d0,epsilon = 1.0d-7,delta=0.1d0
+    real(kind=8), allocatable :: xk(:),xtrial(:),faux(:),gaux(:),indices(:)
+    real(kind=8) :: fxk,fxtrial,aux,opt_cond,sigma
+    logical :: box
 
     ! COMMON SCALARS
     integer :: m,q
@@ -19,29 +20,86 @@ Program main
     common /integerData/ m,q
     common /realVectorData/ t,y
 
+    ! LOCAL SCALARS
+    logical :: checkder
+    integer :: hnnzmax,inform,jcnnzmax,nvparam
+    real(kind=8) :: cnorm,efacc,efstain,eoacc,eostain,epsfeas,epsopt,f,nlpsupn,snorm
+
+    ! LOCAL ARRAYS
+    character(len=80) :: specfnm,outputfnm,vparam(10)
+    logical :: coded(11)
+    logical,        pointer :: equatn(:),linear(:)
+    real(kind=8),   pointer :: l(:),lambda(:),u(:),x(:)
+
     m = 34; q = 1
 
-    allocate(t(m),y(m),stat=allocerr)
+    allocate(t(m),y(m),x(n),xk(n-1),xtrial(n-1),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
         write(*,*) 'Allocation error in main program'
         stop
     end if
   
-    call readData()
+    call read_data()
+
+
+
+    ! Coded subroutines
+
+    coded(1:6)  = .true.  ! evalf, evalg, evalh, evalc, evaljac, evalhc
+    coded(7:11) = .false. ! evalfc,evalgjac,evalgjacp,evalhl,evalhlp
+
+
+    ! Upper bounds on the number of sparse-matrices non-null elements
+    jcnnzmax = 10000
+    hnnzmax  = 10000
+
+    ! Checking derivatives?
+    checkder = .false.
+
+    ! Parameters setting
+    epsfeas   =   1.0d-08
+    epsopt    =   1.0d-08
+
+    efstain   =   1.0d+20
+    eostain   = - 1.0d+20
+
+    efacc     = - 1.0d+20
+    eoacc     = - 1.0d+20
+
+    outputfnm = ''
+    specfnm   = ''
+
+    nvparam   = 1
+    vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
+
+    !==============================================================================
+    ! MAIN ALGORITHM
+    !==============================================================================
+    iter = 0
+
+    xk = 0.0d0
+
+    box = .false.
+
+    if (box .eqv. .false.) then
+        l(1:n)   = -1.0d+20
+        u(1:n-1) = 1.0d+20; l(n) = 0.0d0
+    else
+        l(1:n-1) = 0.0d0;   l(n) = -1.0d+20 
+        u(1:n-1) = 1.0d+20; l(n) = 0.0d0
+    endif
 
     CONTAINS
 
     !==============================================================================
     ! EXPORT RESULT TO PLOT
     !==============================================================================
-    subroutine export(x,n,x1,ntrain,nval)
+    subroutine export(x,n)
         implicit none
 
-        integer,        intent(in) :: n,ntrain,nval
-        real(kind=8),   intent(in) :: x(n)
-        real(kind=8) :: aux
-        integer :: i,j
+        integer,        intent(in) :: n
+        real(kind=8),   intent(in) :: x(n-1)
 
         Open(Unit = 10, File = "output/xstarovo.txt", ACCESS = "SEQUENTIAL")
 
@@ -53,11 +111,14 @@ Program main
 
     end subroutine export
 
+    ! subroutine mount_Idelta
+    !     implicit none
+
     !==============================================================================
     !
     !==============================================================================
 
-    subroutine mountGrad(dFmin,x,n,indices)
+    subroutine mount_grad(dFmin,x,n,indices)
         implicit none
 
         integer,        intent(in) :: n,indices(q)
@@ -82,7 +143,7 @@ Program main
             dFmin(1:n) = dFmin(1:n) + gx * (/((t(indices(j)) - t(m))**i, i = 1, n)/)
         enddo
 
-    end subroutine mountGrad
+    end subroutine mount_grad
 
     function fi(x,i,n) result (res)
         implicit none
@@ -90,7 +151,6 @@ Program main
         integer,        intent(in) :: n,i
         real(kind=8),   intent(in) :: x(n)
         real(kind=8) :: res
-        integer :: k
 
         ! COMMON SCALARS
         integer :: m,q
@@ -110,7 +170,7 @@ Program main
         implicit none 
 
         integer,        intent(in) :: n,i
-        real(kind=8),   intent(in) :: x(n)
+        real(kind=8),   intent(in) :: x(n-1)
         real(kind=8) :: res
 
         ! COMMON SCALARS
@@ -130,7 +190,7 @@ Program main
     !==============================================================================
     ! READ THE DATA CORRESPONDING TO THE NUMBER OF days DESIRED
     !==============================================================================
-    subroutine readData()
+    subroutine read_data()
         implicit none
 
         ! COMMON SCALARS
@@ -153,5 +213,5 @@ Program main
         enddo
 
         close(10)
-    end subroutine readData
+    end subroutine read_data
 end Program main
