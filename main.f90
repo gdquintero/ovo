@@ -39,35 +39,17 @@ Program main
         implicit none
 
         integer,        intent(in) :: n,ntrain,nval
-        real(kind=8),   intent(in) :: x(n),x1
+        real(kind=8),   intent(in) :: x(n)
         real(kind=8) :: aux
         integer :: i,j
 
-        Open(Unit = 100, File = "output/xstarlovo.txt", ACCESS = "SEQUENTIAL")
-        Open(Unit = 110, File = "output/training.txt", ACCESS = "SEQUENTIAL")
-        Open(Unit = 120, File = "output/validation.txt", ACCESS = "SEQUENTIAL")
-        Open(Unit = 130, File = "output/data.txt", ACCESS = "SEQUENTIAL")
-        Open(Unit = 140, File = "output/data2.txt", ACCESS = "SEQUENTIAL")
+        Open(Unit = 10, File = "output/xstarovo.txt", ACCESS = "SEQUENTIAL")
 
-        write(100,*) x1
-        write(100,*) x(1)
-        write(100,*) x(2)
-        write(100,*) x(3)
+        write(10,*) x(1)
+        write(10,*) x(2)
+        write(10,*) x(3)
 
-        do i = 1, ntrain
-            read(130,*) aux
-            write(110,*) i, aux
-        enddo
-
-        j = i
-
-        do i = 1, nval
-            read(140,*) aux
-            write(120,*) j, aux
-            j = j + 1
-        enddo
-        
-        close(100)
+        close(10)
 
     end subroutine export
 
@@ -130,7 +112,6 @@ Program main
         integer,        intent(in) :: n,i
         real(kind=8),   intent(in) :: x(n)
         real(kind=8) :: res
-        integer :: k
 
         ! COMMON SCALARS
         integer :: m,q
@@ -141,8 +122,8 @@ Program main
         common /integerData/ m,q
         common /realVectorData/ t,y
 
-        res = dot_product(x,(/((t(i) - t(m))**k, k = 1, n)/))
-        res = res + y(m)
+        res = (1.0d0 / x(3)) * exp(-x(3) * t(i)) * ((x(1) * t(i)) + (x(1) / x(3)) - x(2))
+        res = 1.0d0 - exp(res - (x(2) * t(i)) - (x(1) / x(3)**2) + (x(2) / x(3))) 
 
     end function model
 
