@@ -4,7 +4,7 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,int_iter,i,kflag
-    integer, parameter :: n = 4,maxIter = 1000,maxIntIter = 1000
+    integer, parameter :: maxIter = 1000,maxIntIter = 1000
     real(kind=8), parameter :: alpha = 0.5d0,epsilon = 1.0d-7,delta=0.1d0
     real(kind=8), allocatable :: xk(:),xtrial(:),faux(:),gaux(:),indices(:)
     integer, allocatable :: Idelta(:)
@@ -23,7 +23,7 @@ Program main
 
     ! LOCAL SCALARS
     logical :: checkder
-    integer :: hnnzmax,inform,jcnnzmax,nvparam
+    integer :: hnnzmax,inform,jcnnzmax,m,n,nvparam
     real(kind=8) :: cnorm,efacc,efstain,eoacc,eostain,epsfeas,epsopt,f,nlpsupn,snorm
 
     ! LOCAL ARRAYS
@@ -32,6 +32,7 @@ Program main
     logical,        pointer :: equatn(:),linear(:)
     real(kind=8),   pointer :: l(:),lambda(:),u(:),x(:)
 
+    n = 4
     samples = 34
     q = 33
 
@@ -101,7 +102,9 @@ Program main
 
     call DSORT(faux,indices,samples,kflag)
 
-    call mount_Idelta(Idelta,faux,xk,n,delta,indices)
+    call mount_Idelta(faux,xk,n,delta,indices,Idelta,m)
+
+    print*, m
 
     CONTAINS
 
@@ -127,40 +130,38 @@ Program main
     !==============================================================================
     !
     !==============================================================================
-    subroutine mount_Idelta(Idelta,f,x,n,delta,indices)
+    subroutine mount_Idelta(f,x,n,delta,indices,Idelta,m)
         implicit none
 
         integer,        intent(in) :: n
         real(kind=8),   intent(in) :: delta,x(n),f(samples),indices(samples)
-        integer,        intent(out) :: Idelta(samples)
-        integer :: samples,i,k
+        integer,        intent(out) :: Idelta(samples),m
+        integer :: samples,q,i
         real(kind=8) :: fq
-        logical :: cond
 
-        common /integerData/ samples
+        common /integerData/ samples,q
 
         Idelta(:) = 0
-        Idelta(1) = int(indices(q))
-        k = 1
         fq = f(q)
+        m = 0
 
-        
-
-        do i = q+1, samples
+        do i = q, samples
             if (abs(fq - f(i)) .le. delta) then
-                k = k + 1
-                Idelta(k) = int(indices(i))
+                m = m + 1
+                Idelta(m) = int(indices(i))
             else
                 exit
             end if
-            
         end do
 
-        ! do i = q-1, 1, -1
-        !     if (abs(fq - f(i)) .le. delta) then
-        !         k = k + 1
-        !         Idelta(k) = f(i)
-        ! end do
+        do i = q-1, 1, -1
+            if (abs(fq - f(i)) .le. delta) then
+                m = m + 1
+                Idelta(m) = int(indices(i))
+            else
+                exit
+            end if
+        end do
 
     end subroutine
 
