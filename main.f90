@@ -135,6 +135,7 @@ Program main
         integer,        intent(out) :: Idelta(samples)
         integer :: samples,i,k
         real(kind=8) :: fq
+        logical :: cond
 
         common /integerData/ samples
 
@@ -142,6 +143,8 @@ Program main
         Idelta(1) = int(indices(q))
         k = 1
         fq = f(q)
+
+        
 
         do i = q+1, samples
             if (abs(fq - f(i)) .le. delta) then
