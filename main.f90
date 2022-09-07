@@ -126,14 +126,22 @@ Program main
 
         do i = 1, m
             gaux1 = model(x,Idelta(i),n) - y(Idelta(i))
-            gaux2 = (x(1) / x(3)) * t(Idelta(i)) * exp(-x(3) * t(Idelta(i))) + (x(1) / x(3)**2)
+            gaux2 = (1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) * &
+                    (x(1) * t(Idelta(i)) + (x(1) / x(3)) - x(2)) - &
+                    x(2) * t(Idelta(i)) - (x(1) / x(3)**2) + (x(2) / x(3))
 
-            grad(i,1) = gaux1 * exp(gaux2) * ((1.0d0 / x(3)) * t(Idelta(i)) * exp(-x(3) * t(Idelta(i))) + &
+            grad(i,1) = gaux1 * exp(gaux2) * &
+                        ((1.0d0 / x(3)) * t(Idelta(i)) * exp(-x(3) * t(Idelta(i))) + &
                         (1.0d0 / x(3)**2) * exp(-x(3) * t(Idelta(i))) - (1.0d0 / x(3)**2))
     
-            grad(i,2) = gaux1 * (-1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) - t(Idelta(i)) + 1.0d0 / x(3)
+            grad(i,2) = gaux1 * exp(gaux2) * &
+                        ((-1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) - t(Idelta(i)) + 1.0d0 / x(3))
 
-            grad(i,3) = gaux1 * 
+            grad(i,3) = gaux1 * exp(gaux2) * &
+                        ((1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) * &
+                        ((-x(1) / x(3)) * t(Idelta(i)) - x(1) * t(Idelta(i))**2 - &
+                        (2.0d0 * x(1) / x(3)**2) - (x(1) * t(Idelta(i)) / x(3)) + &
+                        (x(2) / x(3)) + x(2) * t(Idelta(i))) + (2.0d0 * x(1) / x(3)**2) - (x(2) / x(3)))
         end do
 
         if (iter .ge. max_iter) exit
