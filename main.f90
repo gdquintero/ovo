@@ -4,11 +4,11 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,int_iter,i,kflag
-    integer, parameter :: max_iter = 100,max_int_iter = 100
-    real(kind=8), parameter :: alpha = 0.5d0,epsilon = 1.0d-7,delta=0.1d0
+    integer :: max_iter,max_int_iter
+    real(kind=8) :: alpha,epsilon,delta
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
-    real(kind=8) :: fxk,fxtrial,aux,opt_cond,gaux1,gaux2
+    real(kind=8) :: fxk,fxtrial,opt_cond,gaux1,gaux2
     logical :: box
 
     ! COMMON INTEGERS
@@ -36,9 +36,15 @@ Program main
     logical,        pointer :: equatn(:),linear(:)
     real(kind=8),   pointer :: l(:),lambda(:),u(:),x(:)
 
+    ! Set parameters
     n = 4
     samples = 34
     q = 33
+    max_iter = 100
+    max_int_iter = 100
+    alpha = 0.5d0
+    epsilon = 1.0d-7
+    delta=0.1d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
