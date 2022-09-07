@@ -23,7 +23,7 @@ Program main
     ! COMMON BLOCKS
     common /integerData/ samples,q
     common /scalarData/ sigma
-    common /realVectorData/ t,y
+    common /vectorData/ t,y,xk,grad
 
     ! LOCAL SCALARS
     logical :: checkder
@@ -40,7 +40,7 @@ Program main
     n = 4
     samples = 34
     q = 33
-    max_iter = 100
+    max_iter = 1
     max_int_iter = 100
     alpha = 0.5d0
     epsilon = 1.0d-7
@@ -58,8 +58,8 @@ Program main
 
     ! Coded subroutines
 
-    coded(1:5)  = .true.  ! evalf, evalg, evalh, evalc, evaljac, evalhc
-    coded(6:11) = .false. ! evalfc,evalgjac,evalgjacp,evalhl,evalhlp
+    coded(1:6)  = .true.  ! evalf, evalg, evalh, evalc, evaljac, evalhc
+    coded(7:11) = .false. ! evalfc,evalgjac,evalgjacp,evalhl,evalhlp
 
 
     ! Upper bounds on the number of sparse-matrices non-null elements
@@ -224,15 +224,6 @@ Program main
         integer,        intent(in) :: n,i
         real(kind=8),   intent(in) :: x(n)
         real(kind=8) :: res
-
-        ! COMMON SCALARS
-        integer :: samples,q
-
-        ! COMMON ARRAYS
-        real(kind=8),   pointer :: t(:), y(:)
-
-        common /integerData/ samples,q
-        common /realVectorData/ t,y
         
         res = model(x,i,n) - y(i)
         res = 0.5d0 * (res**2)
@@ -249,15 +240,6 @@ Program main
         real(kind=8),   intent(in) :: x(n-1)
         real(kind=8) :: res
 
-        ! COMMON SCALARS
-        integer :: samples,q
-
-        ! COMMON ARRAYS
-        real(kind=8),   pointer :: t(:), y(:)
-
-        common /integerData/ samples,q
-        common /realVectorData/ t,y
-
         res = (1.0d0 / x(3)) * exp(-x(3) * t(i)) * ((x(1) * t(i)) + (x(1) / x(3)) - x(2))
         res = 1.0d0 - exp(res - (x(2) * t(i)) - (x(1) / x(3)**2) + (x(2) / x(3))) 
 
@@ -268,16 +250,6 @@ Program main
     !==============================================================================
     subroutine read_data()
         implicit none
-
-        ! COMMON SCALARS
-        integer :: samples,q
-
-        ! COMMON ARRAYS
-        real(kind=8),   pointer :: t(:),y(:)
-
-        ! COMMON BLOCKS
-        common /integerData/ samples,q
-        common /realVectorData/ t,y
 
         ! SCALARS
         integer :: i
@@ -397,13 +369,7 @@ Program main
         real(kind=8), intent(in) :: x(n)
         real(kind=8), intent(out) :: jcval(lim)
 
-        real(kind=8) :: sigma
-        real(kind=8), pointer :: grad(:,:), xk(:)
-
         integer :: i
-
-        common /realData/ sigma
-        common /arrayData/ grad, xk
 
         flag = 0
         lmem = .false.
@@ -437,7 +403,19 @@ Program main
         real(kind=8), intent(in) :: x(n)
         real(kind=8), intent(out) :: hcval(lim)
 
-        flag =  -1
+        flag = 0
+        lmem = .false.
+    
+        hcnnz = n - 1
+    
+        if ( hcnnz .gt. lim ) then
+            lmem = .true.
+            return
+        end if
+    
+        hcrow(1:n-1) = (/(i, i = 1, n-1)/)
+        hccol(1:n-1) = (/(i, i = 1, n-1)/)
+        hcval(1:n-1) = sigma
 
     end subroutine myevalhc
 
