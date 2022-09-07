@@ -8,17 +8,21 @@ Program main
     real(kind=8), parameter :: alpha = 0.5d0,epsilon = 1.0d-7,delta=0.1d0
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
-    real(kind=8) :: fxk,fxtrial,aux,opt_cond,sigma,gaux1,gaux2
+    real(kind=8) :: fxk,fxtrial,aux,opt_cond,gaux1,gaux2
     logical :: box
 
-    ! COMMON SCALARS
+    ! COMMON INTEGERS
     integer :: samples,q
+
+    ! COMMON SCALARS
+    real(kind=8) :: sigma
 
     ! COMMON ARRAYS
     real(kind=8),   pointer :: t(:),y(:),grad(:,:),xk(:)
 
     ! COMMON BLOCKS
     common /integerData/ samples,q
+    common /scalarData/ sigma
     common /realVectorData/ t,y
 
     ! LOCAL SCALARS
@@ -361,12 +365,6 @@ Program main
 
         ! ARRAY ARGUMENTS
         real(kind=8), intent(in) :: x(n)
-
-        real(kind=8) :: sigma
-        real(kind=8), pointer :: grad(:,:), xk(:)
-
-        common /realData/ sigma
-        common /arrayData/ grad, xk
 
         ! Compute ind-th constraint
         flag = 0
