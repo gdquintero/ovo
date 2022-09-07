@@ -4,7 +4,7 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,int_iter,i,kflag
-    integer, parameter :: maxIter = 1000,maxIntIter = 1000
+    integer, parameter :: max_iter = 100,max_int_iter = 100
     real(kind=8), parameter :: alpha = 0.5d0,epsilon = 1.0d-7,delta=0.1d0
     real(kind=8), allocatable :: xk(:),xtrial(:),faux(:),gaux(:),indices(:)
     integer, allocatable :: Idelta(:)
@@ -92,19 +92,39 @@ Program main
         u(1:n-1) = 1.0d+20; l(n) = 0.0d0
     endif
 
-    indices(:) = (/(i,i=1,samples)/)
+    indices(:) = (/(i, i = 1, samples)/)
 
     kflag = 2
 
+    ! Scenarios
     do i = 1, samples
         faux(i) = fi(xk,i,n)
     end do
 
+    ! Sorting
     call DSORT(faux,indices,samples,kflag)
 
     call mount_Idelta(faux,xk,n,delta,indices,Idelta,m)
 
-    print*, m
+    ! Minimizing using ALGENCAN
+
+    do
+        iter = iter + 1
+
+        allocate(equatn(m),linear(m),lambda(m),stat=allocerr)
+
+        if ( allocerr .ne. 0 ) then
+            write(*,*) 'Allocation error in main program'
+            stop
+        end if
+
+        equatn(:) = .false.
+        linear(:) = .false.
+        lambda(:) = 0.0d0
+
+        if (iter .ge. max_iter) exit
+
+    end do
 
     CONTAINS
 
