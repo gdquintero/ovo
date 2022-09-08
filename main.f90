@@ -42,7 +42,7 @@ Program main
     max_iter_sub = 10
     alpha = 0.5d0
     epsilon = 1.0d-7
-    delta=0.1d0
+    delta=0.01d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -200,6 +200,8 @@ Program main
         call mount_Idelta(faux,xk,n,indices,delta,Idelta,m)
 
     end do ! End of Main Algorithm
+
+    print*, xk
 
     CONTAINS
 
