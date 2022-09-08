@@ -3,12 +3,10 @@ Program main
 
     implicit none 
     
-    integer :: allocerr,iter,int_iter,i,kflag
-    integer :: max_iter,max_int_iter
-    real(kind=8) :: alpha,epsilon,delta
+    integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
-    real(kind=8) :: fxk,fxtrial,opt_cond,gaux1,gaux2
     logical :: box
 
     ! COMMON INTEGERS
@@ -41,7 +39,7 @@ Program main
     samples = 34
     q = 33
     max_iter = 1
-    max_int_iter = 100
+    max_iter_sub = 1
     alpha = 0.5d0
     epsilon = 1.0d-7
     delta=0.1d0
@@ -116,7 +114,7 @@ Program main
 
     call mount_Idelta(faux,xk,n,indices,delta,Idelta,m)
 
-    ! Minimizing using ALGENCAN
+    fxk = faux(q)
 
     do
         iter = iter + 1
@@ -154,9 +152,54 @@ Program main
                         (x(2) / x(3)) + x(2) * t(Idelta(i))) + (2.0d0 * x(1) / x(3)**2) - (x(2) / x(3)))
         end do
 
+        sigma = sigmin
+
+        iter_sub = 1
+
+        ! Minimizing using ALGENCAN
+
+        do 
+            call algencan(myevalf,myevalg,myevalh,myevalc,myevaljac,myevalhc,   &
+                myevalfc,myevalgjac,myevalgjacp,myevalhl,myevalhlp,jcnnzmax,    &
+                hnnzmax,epsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm,   &
+                specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
+                checkder,f,cnorm,snorm,nlpsupn,inform)
+
+                xtrial(1:n-1) = x(1:n-1)
+
+                ! Scenarios
+                do i = 1, samples
+                    faux(i) = fi(xtrial,i,n)
+                end do
+        
+                fxtrial = faux(q)
+        
+                ! Test the sufficient descent condition
+        
+                if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
+                if (iter_sub .ge. max_iter_sub) exit
+
+                sigma = 2.0d0 * sigma
+                iter_sub = iter_sub + 1
+        end do ! End of internal iterations
+
+        opt_cond = 0.0d0
+
+        do i = 1, m
+            opt_cond = opt_cond + abs(lambda(i)) * norm2(grad(i,:))
+        enddo
+
+        deallocate(lambda,equatn,linear,grad)
+
+        if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
 
-    end do
+        xk(1:n-1) = xtrial(1:n-1)
+        fxk = fxtrial
+
+        call mount_Idelta(faux,xk,n,indices,delta,Idelta,m)
+
+    end do ! End of Main Algorithm
 
     CONTAINS
 
