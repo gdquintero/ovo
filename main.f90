@@ -38,8 +38,8 @@ Program main
     n = 4
     samples = 34
     q = 33
-    max_iter = 1
-    max_iter_sub = 1
+    max_iter = 10
+    max_iter_sub = 10
     alpha = 0.5d0
     epsilon = 1.0d-7
     delta=0.1d0
