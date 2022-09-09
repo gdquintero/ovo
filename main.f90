@@ -200,6 +200,7 @@ Program main
     end do ! End of Main Algorithm
 
     print*, xk
+    print*, opt_cond
 
     CONTAINS
 
