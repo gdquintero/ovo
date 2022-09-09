@@ -112,7 +112,7 @@ Program main
     ! Sorting
     call DSORT(faux,indices,samples,kflag)
 
-    call mount_Idelta(faux,xk,n,indices,delta,Idelta,m)
+    call mount_Idelta(faux,n,indices,delta,Idelta,m)
 
     fxk = faux(q)
 
@@ -195,7 +195,7 @@ Program main
         xk(1:n-1) = xtrial(1:n-1)
         fxk = fxtrial
 
-        call mount_Idelta(faux,xk,n,indices,delta,Idelta,m)
+        call mount_Idelta(faux,n,indices,delta,Idelta,m)
 
     end do ! End of Main Algorithm
 
@@ -225,11 +225,11 @@ Program main
     !==============================================================================
     !
     !==============================================================================
-    subroutine mount_Idelta(f,x,n,indices,delta,Idelta,m)
+    subroutine mount_Idelta(f,n,indices,delta,Idelta,m)
         implicit none
 
         integer,        intent(in) :: n
-        real(kind=8),   intent(in) :: delta,x(n),f(samples),indices(samples)
+        real(kind=8),   intent(in) :: delta,f(samples),indices(samples)
         integer,        intent(out) :: Idelta(samples),m
         integer :: i
         real(kind=8) :: fq
