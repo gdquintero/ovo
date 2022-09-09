@@ -4,7 +4,7 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ti
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
     logical :: box
@@ -133,23 +133,21 @@ Program main
         x(1:n) = (/xk(1:n-1), 0.d0/)
 
         do i = 1, m
+            ti = t(Idelta(i))
             gaux1 = model(x,Idelta(i),n) - y(Idelta(i))
-            gaux2 = (1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) * &
-                    (x(1) * t(Idelta(i)) + (x(1) / x(3)) - x(2)) - &
-                    x(2) * t(Idelta(i)) - (x(1) / x(3)**2) + (x(2) / x(3))
+            gaux2 = (1.0d0 / x(3)) * exp(-x(3) * ti) * (x(1) * ti + (x(1) / x(3)) - x(2)) - &
+                    x(2) * ti - (x(1) / x(3)**2) + (x(2) / x(3))
 
-            grad(i,1) = gaux1 * exp(gaux2) * &
-                        ((1.0d0 / x(3)) * t(Idelta(i)) * exp(-x(3) * t(Idelta(i))) + &
-                        (1.0d0 / x(3)**2) * exp(-x(3) * t(Idelta(i))) - (1.0d0 / x(3)**2))
+            grad(i,1) = gaux1 * exp(gaux2) * ((1.0d0 / x(3)) * exp(-x(3) * ti) * &
+                        (-ti * exp(-x(3) * ti) - (1.0d0 / x(3)) * exp(-x(3) * ti)) + (1.0d0 / x(3)**2))
     
             grad(i,2) = gaux1 * exp(gaux2) * &
-                        ((-1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) - t(Idelta(i)) + 1.0d0 / x(3))
+                        ((1.0d0 / x(3)) * exp(-x(3) * ti) + ti - 1.0d0 / x(3))
 
-            grad(i,3) = gaux1 * exp(gaux2) * &
-                        ((1.0d0 / x(3)) * exp(-x(3) * t(Idelta(i))) * &
-                        ((-x(1) / x(3)) * t(Idelta(i)) - x(1) * t(Idelta(i))**2 - &
-                        (2.0d0 * x(1) / x(3)**2) - (x(1) * t(Idelta(i)) / x(3)) + &
-                        (x(2) / x(3)) + x(2) * t(Idelta(i))) + (2.0d0 * x(1) / x(3)**2) - (x(2) / x(3)))
+            grad(i,3) = gaux1 * exp(gaux2) * ((1.0d0 / x(3)) * exp(-x(3) * ti) * &
+                        ((x(1) / x(3)) * ti + x(1) * (ti**2) + 2.0d0 * (x(1) / x(3)**2) + &
+                        ti * (x(1) / x(3)) - (x(2) / x(3)) - ti * x(2)) - &
+                        2.0d0 * (x(1) / x(3)**3) + (x(2) / x(3)**2))
         end do
 
         sigma = sigmin
