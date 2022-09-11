@@ -88,7 +88,7 @@ Program main
     !==============================================================================
     iter = 0
 
-    xk(:) = 1.0d0
+    xk(:) = 10.0d0
 
     box = .false.
 
@@ -112,9 +112,9 @@ Program main
     ! Sorting
     call DSORT(faux,indices,samples,kflag)
 
-    call mount_Idelta(faux,n,indices,delta,Idelta,m)
-
     fxk = faux(q)
+
+    call mount_Idelta(faux,n,indices,delta,Idelta,m)
 
     do
         iter = iter + 1
@@ -155,7 +155,6 @@ Program main
         iter_sub = 1
 
         ! Minimizing using ALGENCAN
-
         do 
             call algencan(myevalf,myevalg,myevalh,myevalc,myevaljac,myevalhc,   &
                 myevalfc,myevalgjac,myevalgjacp,myevalhl,myevalhlp,jcnnzmax,    &
