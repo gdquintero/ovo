@@ -144,8 +144,8 @@ Program main
 
             grad(i,1) = (1.0d0 / b) * (gaux2 * (ti + (1.0d0 / b)) - (1.0d0 / b))
 
-            grad(i,2) = (1.0d0 / b) * (-1.0d0 * gaux2 * ((a / b) * ti + a * (ti**2) + (2.0d0 * a / b**2) + (a / b) * ti - (c / b) - c * ti) + &
-                        (2.0d0 * a / b**2) - (c / b))
+            ! grad(i,2) = (1.0d0 / b) * (-1.0d0 * gaux2 * ((a / b) * ti + a * (ti**2) + (2.0d0 * a / b**2) + (a / b) * ti - (c / b) - c * ti) + &
+            !             (2.0d0 * a / b**2) - (c / b))
 
             grad(i,3) = (-1.0d0 / b) * (gaux2 - 1.0d0) - ti
 
