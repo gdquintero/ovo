@@ -4,7 +4,7 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ti
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,gaux3,ti,a,b,c
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
     logical :: box
@@ -38,8 +38,8 @@ Program main
     n = 4
     samples = 34
     q = 33
-    max_iter = 10
-    max_iter_sub = 10
+    max_iter = 1
+    max_iter_sub = 1
     alpha = 0.5d0
     epsilon = 1.0d-7
     delta=0.01d0
@@ -70,34 +70,34 @@ Program main
     ! Parameters setting
     epsfeas   =   1.0d-08
     epsopt    =   1.0d-08
-
+  
     efstain   =   1.0d+20
     eostain   = - 1.0d+20
-
+  
     efacc     = - 1.0d+20
     eoacc     = - 1.0d+20
 
     outputfnm = ''
     specfnm   = ''
 
-    nvparam   = 1
-    vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
+    nvparam   = 0
+  !  vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
 
     !==============================================================================
     ! MAIN ALGORITHM
     !==============================================================================
     iter = 0
 
-    xk(:) = 10.0d0
+    xk(:) = 0.5d0
 
     box = .false.
 
     if (box .eqv. .false.) then
         l(1:n)   = -1.0d+20
-        u(1:n-1) = 1.0d+20; l(n) = 0.0d0
+        u(1:n-1) = 1.0d+20; u(n) = 0.0d0
     else
         l(1:n-1) = 0.0d0;   l(n) = -1.0d+20 
-        u(1:n-1) = 1.0d+20; l(n) = 0.0d0
+        u(1:n-1) = 1.0d+20; u(n) = 0.0d0
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
@@ -114,7 +114,7 @@ Program main
 
     fxk = faux(q)
 
-    call mount_Idelta(faux,n,indices,delta,Idelta,m)
+    call mount_Idelta(faux,indices,delta,Idelta,m)
 
     do
         iter = iter + 1
@@ -132,22 +132,24 @@ Program main
 
         x(1:n) = (/xk(1:n-1), 0.d0/)
 
+        a = x(1)
+        b = x(2)
+        c = x(3)
+
         do i = 1, m
             ti = t(Idelta(i))
             gaux1 = model(x,Idelta(i),n) - y(Idelta(i))
-            gaux2 = (1.0d0 / x(3)) * exp(-x(3) * ti) * (x(1) * ti + (x(1) / x(3)) - x(2)) - &
-                    x(2) * ti - (x(1) / x(3)**2) + (x(2) / x(3))
+            gaux2 = exp(-1.0d0 * b * ti)
+            gaux3 = -1.0d0 * exp((a / b) * ti * gaux2 + (1.0d0 / b) * ((a / b) - c) * (gaux2 - 1.0d0) - c * ti)
 
-            grad(i,1) = gaux1 * exp(gaux2) * ((1.0d0 / x(3)) * exp(-x(3) * ti) * &
-                        (-ti * exp(-x(3) * ti) - (1.0d0 / x(3)) * exp(-x(3) * ti)) + (1.0d0 / x(3)**2))
-    
-            grad(i,2) = gaux1 * exp(gaux2) * &
-                        ((1.0d0 / x(3)) * exp(-x(3) * ti) + ti - 1.0d0 / x(3))
+            grad(i,1) = (1.0d0 / b) * (gaux2 * (ti + (1.0d0 / b)) - (1.0d0 / b))
 
-            grad(i,3) = gaux1 * exp(gaux2) * ((1.0d0 / x(3)) * exp(-x(3) * ti) * &
-                        ((x(1) / x(3)) * ti + x(1) * (ti**2) + 2.0d0 * (x(1) / x(3)**2) + &
-                        ti * (x(1) / x(3)) - (x(2) / x(3)) - ti * x(2)) - &
-                        2.0d0 * (x(1) / x(3)**3) + (x(2) / x(3)**2))
+            grad(i,2) = (1.0d0 / b) * (-1.0d0 * gaux2 * ((a / b) * ti + a * (ti**2) + (2.0d0 * a / b**2) + (a / b) * ti - (c / b) - c * ti) + &
+                        (2.0d0 * a / b**2) - (c / b))
+
+            grad(i,3) = (-1.0d0 / b) * (gaux2 - 1.0d0) - ti
+
+            grad(i,:) = gaux1 * grad(i,:)
         end do
 
         sigma = sigmin
@@ -162,22 +164,24 @@ Program main
                 specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                 checkder,f,cnorm,snorm,nlpsupn,inform)
 
-                xtrial(1:n-1) = x(1:n-1)
+            xtrial(1:n-1) = x(1:n-1)
 
-                ! Scenarios
-                do i = 1, samples
-                    faux(i) = fi(xtrial,i,n)
-                end do
-        
-                fxtrial = faux(q)
-        
-                ! Test the sufficient descent condition
-        
-                if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
-                if (iter_sub .ge. max_iter_sub) exit
+            ! Scenarios
+            do i = 1, samples
+                faux(i) = fi(xtrial,i,n)
+            end do
+    
+            fxtrial = faux(q)
+    
+            ! Test the sufficient descent condition
 
-                sigma = 2.0d0 * sigma
-                iter_sub = iter_sub + 1
+            print*, iter_sub
+    
+            if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
+            if (iter_sub .ge. max_iter_sub) exit
+
+            sigma = 2.0d0 * sigma
+            iter_sub = iter_sub + 1
         end do ! End of internal iterations
 
         opt_cond = 0.0d0
@@ -186,15 +190,14 @@ Program main
             opt_cond = opt_cond + abs(lambda(i)) * norm2(grad(i,:))
         enddo
 
-        deallocate(lambda,equatn,linear,grad)
-
-        if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
 
+        deallocate(lambda,equatn,linear,grad)
+        
         xk(1:n-1) = xtrial(1:n-1)
         fxk = fxtrial
 
-        call mount_Idelta(faux,n,indices,delta,Idelta,m)
+        call mount_Idelta(faux,indices,delta,Idelta,m)
 
     end do ! End of Main Algorithm
 
@@ -225,10 +228,9 @@ Program main
     !==============================================================================
     !
     !==============================================================================
-    subroutine mount_Idelta(f,n,indices,delta,Idelta,m)
+    subroutine mount_Idelta(f,indices,delta,Idelta,m)
         implicit none
 
-        integer,        intent(in) :: n
         real(kind=8),   intent(in) :: delta,f(samples),indices(samples)
         integer,        intent(out) :: Idelta(samples),m
         integer :: i
@@ -281,10 +283,15 @@ Program main
 
         integer,        intent(in) :: n,i
         real(kind=8),   intent(in) :: x(n-1)
-        real(kind=8) :: res
+        real(kind=8) :: res,a,b,c,ti
 
-        res = (1.0d0 / x(3)) * exp(-x(3) * t(i)) * ((x(1) * t(i)) + (x(1) / x(3)) - x(2))
-        res = 1.0d0 - exp(res - (x(2) * t(i)) - (x(1) / x(3)**2) + (x(2) / x(3))) 
+        a = x(1)
+        b = x(2)
+        c = x(3)
+        ti = t(i)
+
+        res = (a / b) * ti * exp(-1.0 * b * ti) + (1.0d0 / b) * ((a / b) - c) * (exp(-1.0d0 * b * ti) - 1.0d0) - c * ti
+        res = 1.0d0 - exp(res)
 
     end function model
 
