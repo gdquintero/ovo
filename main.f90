@@ -93,11 +93,13 @@ Program main
     box = .true.
 
     if (box .eqv. .false.) then
-        l(1:n)   = -1.0d+20
-        u(1:n-1) = 1.0d+20; u(n) = 0.0d0
+        l(1:n)      = -1.0d+20
+        (/u(1:n-1), u(n)/)    = (1.0d+20, 0.0d0)
     else
-        l(1:n-1) = 0.0d0;   l(n) = -1.0d+20 
-        u(1:n-1) = 1.0d+20; u(n) = 0.0d0
+        l(1:n-1)    = 0.0d0
+        l(n)        = -1.0d+20 
+        u(1:n-1)    = 1.0d+20
+        u(n)        = 0.0d0
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
