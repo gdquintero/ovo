@@ -174,8 +174,6 @@ Program main
             fxtrial = faux(q)
     
             ! Test the sufficient descent condition
-
-            print*, iter_sub
     
             if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
             if (iter_sub .ge. max_iter_sub) exit
@@ -190,6 +188,7 @@ Program main
             opt_cond = opt_cond + abs(lambda(i)) * norm2(grad(i,:))
         enddo
 
+        if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
 
         deallocate(lambda,equatn,linear,grad)
