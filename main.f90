@@ -40,11 +40,11 @@ Program main
     outliers = 1
     q = samples - outliers
     max_iter = 100
-    max_iter_sub = 1000
+    max_iter_sub = 10000
     alpha = 0.5d0
     epsilon = 1.0d-10
     delta = 1.0d-2
-    sigmin = 1.0d-6
+    sigmin = 1.0d4
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -105,8 +105,7 @@ Program main
         l(1:n-1)    = 0.0d0
         l(n)        = -1.0d+20 
 
-        u(1:n-1)    = 1.0d+20
-        u(n)        = 0.0d0
+        u(1:n)    = 1.0d+20
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
@@ -164,7 +163,7 @@ Program main
         sigma = sigmin
 
         iter_sub = 1
-        x(:) = (/xk(:),0.0d0/)
+        x(:) = (/1.0d0,1.0d0,1.0d0,0.0d0/)
         ! Minimizing using ALGENCAN
         do 
             print*,"internas", iter_sub
