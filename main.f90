@@ -92,7 +92,7 @@ Program main
     xk(:) = 0.5d0
 
     ! Box-constrained? 
-    box = .true.
+    box = .true. 
 
     if (box .eqv. .false.) then
         l(1:n)      = -1.0d+20
@@ -216,22 +216,24 @@ Program main
     print*, xk
     print*, opt_cond
 
+    call export(xk,n)
+
     CONTAINS
 
     !==============================================================================
     ! EXPORT RESULT TO PLOT
     !==============================================================================
-    subroutine export(x,n)
+    subroutine export(xsol,n)
         implicit none
 
         integer,        intent(in) :: n
-        real(kind=8),   intent(in) :: x(n-1)
+        real(kind=8),   intent(in) :: xsol(n-1)
 
         Open(Unit = 10, File = "output/xstarovo.txt", ACCESS = "SEQUENTIAL")
 
-        write(10,*) x(1)
-        write(10,*) x(2)
-        write(10,*) x(3)
+        write(10,*) xsol(1)
+        write(10,*) xsol(2)
+        write(10,*) xsol(3)
 
         close(10)
 
