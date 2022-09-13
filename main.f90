@@ -422,7 +422,7 @@ Program main
 
         ! Compute ind-th constraint
         flag = 0
-
+        print*, dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)), (sigma * 0.5d0), (norm2(x(1:n-1) - xk(1:n-1))**2),x(n)
         c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) + (sigma * 0.5d0) * &
             (norm2(x(1:n-1) - xk(1:n-1))**2) - x(n)
 
