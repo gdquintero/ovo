@@ -4,7 +4,7 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,gaux3,ti,a,b,c
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ebt,ti,a,b,c
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
     logical :: box
@@ -38,8 +38,8 @@ Program main
     n = 4
     samples = 34
     q = 33
-    max_iter = 1
-    max_iter_sub = 1
+    max_iter = 100
+    max_iter_sub = 100
     alpha = 0.5d0
     epsilon = 1.0d-7
     delta=0.01d0
@@ -90,7 +90,7 @@ Program main
 
     xk(:) = 0.5d0
 
-    box = .false.
+    box = .true.
 
     if (box .eqv. .false.) then
         l(1:n)   = -1.0d+20
@@ -139,17 +139,17 @@ Program main
         do i = 1, m
             ti = t(Idelta(i))
             gaux1 = model(x,Idelta(i),n) - y(Idelta(i))
-            gaux2 = exp(-1.0d0 * b * ti)
-            gaux3 = -1.0d0 * exp((a / b) * ti * gaux2 + (1.0d0 / b) * ((a / b) - c) * (gaux2 - 1.0d0) - c * ti)
+            gaux2 = -1.0d0 * exp((a / b) * ti * gaux2 + (1.0d0 / b) * ((a / b) - c) * (gaux2 - 1.0d0) - c * ti)
+            ebt = exp(-1.0d0 * b * ti)
 
-            grad(i,1) = (1.0d0 / b) * (gaux2 * (ti + (1.0d0 / b)) - (1.0d0 / b))
+            grad(i,1) = (1.0d0 / b) * (ebt * (ti + (1.0d0 / b)) - (1.0d0 / b))
 
-            ! grad(i,2) = (1.0d0 / b) * (-1.0d0 * gaux2 * ((a / b) * ti + a * (ti**2) + (2.0d0 * a / b**2) + (a / b) * ti - (c / b) - c * ti) + &
-            !             (2.0d0 * a / b**2) - (c / b))
+            grad(i,2) = (1.0d0 / b) * (-1.0d0 * ebt * (a * (ti**2) + (2.0d0 * a * ti / b) + & 
+                        (2.0d0 * a / (b**2)) - ti * c - (c / b)) - (2.0d0 * a / (b**2)) + (c / b))
 
-            grad(i,3) = (-1.0d0 / b) * (gaux2 - 1.0d0) - ti
+            grad(i,3) = (-1.0d0 / b) * (b * ti + ebt - 1.0d0)
 
-            grad(i,:) = gaux1 * grad(i,:)
+            grad(i,:) = gaux1 * gaux2 * grad(i,:)
         end do
 
         sigma = sigmin
@@ -283,14 +283,15 @@ Program main
 
         integer,        intent(in) :: n,i
         real(kind=8),   intent(in) :: x(n-1)
-        real(kind=8) :: res,a,b,c,ti
+        real(kind=8) :: res,a,b,c,ti,ebt
 
         a = x(1)
         b = x(2)
         c = x(3)
         ti = t(i)
+        ebt = exp(-1.0d0 * b * ti)
 
-        res = (a / b) * ti * exp(-1.0 * b * ti) + (1.0d0 / b) * ((a / b) - c) * (exp(-1.0d0 * b * ti) - 1.0d0) - c * ti
+        res = (a / b) * ti * ebt + (1.0d0 / b) * ((a / b) - c) * (ebt - 1.0d0) - c * ti
         res = 1.0d0 - exp(res)
 
     end function model
