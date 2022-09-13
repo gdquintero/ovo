@@ -94,10 +94,13 @@ Program main
 
     if (box .eqv. .false.) then
         l(1:n)      = -1.0d+20
-        (/u(1:n-1), u(n)/)    = (1.0d+20, 0.0d0)
+
+        u(1:n-1)    = 1.0d+20
+        u(n)        = 0.0d0
     else
         l(1:n-1)    = 0.0d0
         l(n)        = -1.0d+20 
+
         u(1:n-1)    = 1.0d+20
         u(n)        = 0.0d0
     endif
@@ -132,7 +135,7 @@ Program main
         linear(:) = .false.
         lambda(:) = 0.0d0
 
-        x(1:n) = (/xk(1:n-1), 0.d0/)
+        x(1:n) = (/xk(1:n-1), 0.0d0/)
 
         a = x(1)
         b = x(2)
@@ -168,10 +171,15 @@ Program main
 
             xtrial(1:n-1) = x(1:n-1)
 
+            indices(:) = (/(i, i = 1, samples)/)
+
             ! Scenarios
             do i = 1, samples
                 faux(i) = fi(xtrial,i,n)
             end do
+
+            ! Sorting
+            call DSORT(faux,indices,samples,kflag)
     
             fxtrial = faux(q)
     
