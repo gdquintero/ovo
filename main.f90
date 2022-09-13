@@ -4,7 +4,7 @@ Program main
     implicit none 
     
     integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ebt,ti,a,b,c
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ebt,ti,a,b,c,cc
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
     logical :: box
@@ -38,8 +38,8 @@ Program main
     n = 4
     samples = 34
     q = 33
-    max_iter = 100
-    max_iter_sub = 100
+    max_iter = 1
+    max_iter_sub = 1
     alpha = 0.5d0
     epsilon = 1.0d-7
     delta=0.01d0
@@ -92,7 +92,7 @@ Program main
     xk(:) = 0.5d0
 
     ! Box-constrained? 
-    box = .true. 
+    box = .false. 
 
     if (box .eqv. .false.) then
         l(1:n)      = -1.0d+20
@@ -172,6 +172,13 @@ Program main
                 specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                 checkder,f,cnorm,snorm,nlpsupn,inform)
 
+            print*, x
+
+            do i = 1, m
+                call myevalc(n,x,i,cc,inform)
+                print*, m,cc
+            end do
+
             xtrial(1:n-1) = x(1:n-1)
 
             indices(:) = (/(i, i = 1, samples)/)
@@ -213,8 +220,8 @@ Program main
 
     end do ! End of Main Algorithm
 
-    print*, xk
-    print*, opt_cond
+    
+    ! print*, opt_cond
 
     call export(xk,n)
 
