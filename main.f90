@@ -91,7 +91,7 @@ Program main
     ! Initial solution
     xk(:) = 0.5d0
 
-    ! Box-constrained? yes: true, not: false 
+    ! Box-constrained? 
     box = .true.
 
     if (box .eqv. .false.) then
