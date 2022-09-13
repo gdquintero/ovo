@@ -3,7 +3,7 @@ Program main
 
     implicit none 
     
-    integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag
+    integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag,outliers
     real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ebt,ti,a,b,c,cc
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
@@ -37,12 +37,14 @@ Program main
     ! Set parameters
     n = 4
     samples = 34
-    q = 33
-    max_iter = 1
-    max_iter_sub = 1
+    outliers = 1
+    q = samples - outliers
+    max_iter = 100
+    max_iter_sub = 1000
     alpha = 0.5d0
-    epsilon = 1.0d-7
-    delta=0.01d0
+    epsilon = 1.0d-10
+    delta = 1.0d-2
+    sigmin = 1.0d-6
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -68,20 +70,20 @@ Program main
     checkder = .false.
 
     ! Parameters setting
-    epsfeas   =   1.0d-08
-    epsopt    =   1.0d-08
+    epsfeas   = 1.0d-08
+    epsopt    = 1.0d-08
   
-    efstain   =   1.0d+20
-    eostain   = - 1.0d+20
+    efstain   = sqrt( epsfeas )
+    eostain   = epsopt ** 1.5d0
   
-    efacc     = - 1.0d+20
-    eoacc     = - 1.0d+20
+    efacc     = sqrt( epsfeas )
+    eoacc     = sqrt( epsopt )
 
     outputfnm = ''
     specfnm   = ''
 
-    nvparam   = 0
-  !  vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
+    nvparam   = 1
+    vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
 
     !==============================================================================
     ! MAIN ALGORITHM
@@ -89,10 +91,10 @@ Program main
     iter = 0
 
     ! Initial solution
-    xk(:) = 0.5d0
+    xk(:) = (/0.001, 0.001, 0.001/)
 
     ! Box-constrained? 
-    box = .false. 
+    box = .true. 
 
     if (box .eqv. .false.) then
         l(1:n)      = -1.0d+20
@@ -123,6 +125,7 @@ Program main
     fxk = faux(q)
 
     call mount_Idelta(faux,indices,delta,Idelta,m)
+    
 
     do
         iter = iter + 1
@@ -138,15 +141,13 @@ Program main
         linear(:) = .false.
         lambda(:) = 0.0d0
 
-        x(1:n) = (/xk(1:n-1), 0.0d0/)
-
-        a = x(1)
-        b = x(2)
-        c = x(3)
+        a = xk(1)
+        b = xk(2)
+        c = xk(3)
 
         do i = 1, m
             ti = t(Idelta(i))
-            gaux1 = model(x,Idelta(i),n) - y(Idelta(i))
+            gaux1 = model(xk,Idelta(i),n) - y(Idelta(i))
             gaux2 = -1.0d0 * exp((a / b) * ti * gaux2 + (1.0d0 / b) * ((a / b) - c) * (gaux2 - 1.0d0) - c * ti)
             ebt = exp(-1.0d0 * b * ti)
 
@@ -163,21 +164,15 @@ Program main
         sigma = sigmin
 
         iter_sub = 1
-
+        x(:) = (/xk(:),0.0d0/)
         ! Minimizing using ALGENCAN
         do 
+            print*,"internas", iter_sub
             call algencan(myevalf,myevalg,myevalh,myevalc,myevaljac,myevalhc,   &
                 myevalfc,myevalgjac,myevalgjacp,myevalhl,myevalhlp,jcnnzmax,    &
                 hnnzmax,epsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm,   &
                 specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                 checkder,f,cnorm,snorm,nlpsupn,inform)
-
-            print*, x
-
-            do i = 1, m
-                call myevalc(n,x,i,cc,inform)
-                print*, m,cc
-            end do
 
             xtrial(1:n-1) = x(1:n-1)
 
@@ -194,7 +189,7 @@ Program main
             fxtrial = faux(q)
     
             ! Test the sufficient descent condition
-    
+            print*, fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2), fxtrial,fxk
             if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
             if (iter_sub .ge. max_iter_sub) exit
 
@@ -202,13 +197,17 @@ Program main
             iter_sub = iter_sub + 1
         end do ! End of internal iterations
 
+        print*, iter, m
+
         opt_cond = 0.0d0
 
-        do i = 1, m
-            opt_cond = opt_cond + abs(lambda(i)) * norm2(grad(i,:))
-        enddo
+        ! do i = 1, m
+        !     opt_cond = opt_cond + lambda(i) * norm2(grad(i,:))
+        ! enddo
 
-        if (opt_cond .le. epsilon) exit
+        opt_cond =  norm2(xtrial - xk)
+
+        ! if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
 
         deallocate(lambda,equatn,linear,grad)
@@ -221,7 +220,8 @@ Program main
     end do ! End of Main Algorithm
 
     
-    ! print*, opt_cond
+    print*, x
+    print*, opt_cond, nlpsupn
 
     call export(xk,n)
 
@@ -422,7 +422,7 @@ Program main
 
         ! Compute ind-th constraint
         flag = 0
-        print*, dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)), (sigma * 0.5d0), (norm2(x(1:n-1) - xk(1:n-1))**2),x(n)
+
         c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) + (sigma * 0.5d0) * &
             (norm2(x(1:n-1) - xk(1:n-1))**2) - x(n)
 
