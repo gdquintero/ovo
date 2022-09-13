@@ -88,8 +88,10 @@ Program main
     !==============================================================================
     iter = 0
 
+    ! Initial solution
     xk(:) = 0.5d0
 
+    ! Box-constrained? yes: true, not: false 
     box = .true.
 
     if (box .eqv. .false.) then
@@ -117,6 +119,7 @@ Program main
     ! Sorting
     call DSORT(faux,indices,samples,kflag)
 
+    ! q-Order-Value function 
     fxk = faux(q)
 
     call mount_Idelta(faux,indices,delta,Idelta,m)
