@@ -91,21 +91,19 @@ Program main
     iter = 0
 
     ! Initial solution
-    xk(:) = (/0.001, 0.001, 0.001/)
+    xk(:) = 1.0d-1
 
     ! Box-constrained? 
     box = .true. 
 
     if (box .eqv. .false.) then
         l(1:n)      = -1.0d+20
-
-        u(1:n-1)    = 1.0d+20
-        u(n)        = 0.0d0
+        u(1:n)      = 1.0d+20
     else
         l(1:n-1)    = 0.0d0
         l(n)        = -1.0d+20 
 
-        u(1:n)    = 1.0d+20
+        u(1:n)      = 1.0d+20
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
@@ -287,7 +285,7 @@ Program main
         implicit none
 
         integer,        intent(in) :: n,i
-        real(kind=8),   intent(in) :: x(n)
+        real(kind=8),   intent(in) :: x(n-1)
         real(kind=8) :: res
         
         res = model(x,i,n) - y(i)
