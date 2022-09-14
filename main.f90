@@ -39,12 +39,12 @@ Program main
     samples = 34
     outliers = 1
     q = samples - outliers
-    max_iter = 10000
+    max_iter = 100000
     max_iter_sub = 10000
     alpha = 0.5d0
     epsilon = 1.0d-7
     delta = 1.0d-3
-    sigmin = 1.0d0
+    sigmin = 1.0d-4
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -164,7 +164,6 @@ Program main
         x(:) = (/xk(:),0.0d0/)
         ! Minimizing using ALGENCAN
         do 
-            print*,"internas", iter_sub
             call algencan(myevalf,myevalg,myevalh,myevalc,myevaljac,myevalhc,   &
                 myevalfc,myevalgjac,myevalgjacp,myevalhl,myevalhlp,jcnnzmax,    &
                 hnnzmax,epsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm,   &
@@ -193,8 +192,6 @@ Program main
             iter_sub = iter_sub + 1
         end do ! End of internal iterations
 
-        print*, iter
-
         opt_cond = 0.0d0
 
         ! do i = 1, m
@@ -202,6 +199,7 @@ Program main
         ! enddo
 
         opt_cond =  norm2(xtrial - xk)
+        print*, iter, iter_sub, opt_cond
 
         if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit

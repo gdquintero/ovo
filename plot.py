@@ -55,16 +55,18 @@ t = np.linspace(tmin,tmax,1000)
 
 fig, axs = plt.subplots(2,1)
 
-axs[0].plot(df["age"],df["ratio"],"o")
-axs[0].plot(t,least_squares(t),label="LS")
-axs[0].plot(t,model(x,t),label="OVO")
+axs[0].plot(df["age"],df["ratio"],"ko")
+axs[0].plot(t,least_squares(t),label="LS",color="red")
+axs[0].plot(t,model(x,t),label="OVO",color="blue")
+axs[0].legend()
 
-axs[1].plot(t,lamb([0.051,0.33,0.003],t),label="LS")
-axs[1].plot(t,lamb(x,t),label="OVO")
-
+axs[1].plot(t,lamb([0.051,0.33,0.003],t),label="LS",color="red")
+axs[1].plot(t,lamb(x,t),label="OVO",color="blue")
+axs[1].legend()
 
 plt.show()
 plt.close()
 
 fig, ax = plt.subplots()
 ax = sns.boxplot(x=df["ratio"],ax=ax)
+
