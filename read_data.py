@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-def model1(x,t):
+def model(x,t):
     a = x[0]
     b = x[1]
     c = x[2]
@@ -12,13 +12,14 @@ def model1(x,t):
     res = (a / b) * t * ebt + (1.0 / b) * ((a / b) - c) * (ebt - 1.0) - c * t
     return 1.0 - np.exp(res)
 
-def model2(x,t):
-    a = x[0]
-    b = x[1]
-    c = x[2]
+def least_squares(t):
+    a = 0.051
+    b = 0.33
+    c = 0.003
     ebt = np.exp(-1.0 * b * t)
 
-    return (a * t - c) * ebt + c
+    res = (a / b) * t * ebt + (1.0 / b) * ((a / b) - c) * (ebt - 1.0) - c * t
+    return 1.0 - np.exp(res)
 
 
 df = pd.read_excel("zika.xlsx")
@@ -35,8 +36,8 @@ x = np.empty(3)
 
 
 x[0] = float(xdata[0])
-x[1] = float(xdata[2])
-x[2] = float(xdata[1])
+x[1] = float(xdata[1])
+x[2] = float(xdata[2])
 
 tmin = df["age"].values[0]
 tmax = df["age"].values[-1]
@@ -44,7 +45,9 @@ tmax = df["age"].values[-1]
 t = np.linspace(tmin,tmax,1000)
 
 plt.plot(df["age"],df["ratio"],"o")
-plt.plot(t,model1(x,t))
+plt.plot(t,least_squares(t),label="LS")
+plt.plot(t,model(x,t),label="OVO")
+plt.legend()
 plt.show()
 plt.close()
 

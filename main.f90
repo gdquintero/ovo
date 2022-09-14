@@ -39,12 +39,12 @@ Program main
     samples = 34
     outliers = 1
     q = samples - outliers
-    max_iter = 100
+    max_iter = 10000
     max_iter_sub = 10000
     alpha = 0.5d0
-    epsilon = 1.0d-10
+    epsilon = 1.0d-7
     delta = 1.0d-2
-    sigmin = 1.0d4
+    sigmin = 1.0d-2
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -144,16 +144,16 @@ Program main
 
         do i = 1, m
             ti = t(Idelta(i))
-            gaux1 = model(xk,Idelta(i),n) - y(Idelta(i))
-            gaux2 = -1.0d0 * exp((a / b) * ti * gaux2 + (1.0d0 / b) * ((a / b) - c) * (gaux2 - 1.0d0) - c * ti)
             ebt = exp(-1.0d0 * b * ti)
+            gaux1 = model(xk,Idelta(i),n) - y(Idelta(i))
+            gaux2 = exp((a / b) * ti * ebt + (1.0d0 / b) * ((a / b) - c) * (ebt - 1.0d0) - c * ti)
 
-            grad(i,1) = (1.0d0 / b) * (ebt * (ti + (1.0d0 / b)) - (1.0d0 / b))
+            grad(i,1) = (-1.0d0 / b) * (ebt * (ti - (1.0d0 / b)) - (1.0d0 / b))
 
-            grad(i,2) = (1.0d0 / b) * (-1.0d0 * ebt * (a * (ti**2) + (2.0d0 * a * ti / b) + & 
-                        (2.0d0 * a / (b**2)) - ti * c - (c / b)) - (2.0d0 * a / (b**2)) + (c / b))
+            grad(i,2) = (a / b) * (ti**2) * ebt + (a / b**2) * ti * ebt + (a / b**3) * (ebt - 1.0d0) + &
+                        (ti / b) * ((a / b) - c) * ebt + (1.0d0 / b**2) * ((a / b) - c) * (ebt - 1.0d0)
 
-            grad(i,3) = (-1.0d0 / b) * (b * ti + ebt - 1.0d0)
+            grad(i,3) = ti + (1.0d0 / b) * (ebt - 1.0d0)
 
             grad(i,:) = gaux1 * gaux2 * grad(i,:)
         end do
@@ -161,7 +161,7 @@ Program main
         sigma = sigmin
 
         iter_sub = 1
-        x(:) = (/1.0d0,1.0d0,1.0d0,0.0d0/)
+        x(:) = (/xk(:),0.0d0/)
         ! Minimizing using ALGENCAN
         do 
             print*,"internas", iter_sub
@@ -186,7 +186,6 @@ Program main
             fxtrial = faux(q)
     
             ! Test the sufficient descent condition
-            print*, fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2), fxtrial,fxk
             if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
             if (iter_sub .ge. max_iter_sub) exit
 
@@ -194,7 +193,7 @@ Program main
             iter_sub = iter_sub + 1
         end do ! End of internal iterations
 
-        print*, iter, m
+        print*, iter
 
         opt_cond = 0.0d0
 
@@ -204,7 +203,7 @@ Program main
 
         opt_cond =  norm2(xtrial - xk)
 
-        ! if (opt_cond .le. epsilon) exit
+        if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
 
         deallocate(lambda,equatn,linear,grad)
@@ -217,8 +216,7 @@ Program main
     end do ! End of Main Algorithm
 
     
-    print*, x
-    print*, opt_cond, nlpsupn
+    print*, xk
 
     call export(xk,n)
 
