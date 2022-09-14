@@ -21,6 +21,15 @@ def least_squares(t):
     res = (a / b) * t * ebt + (1.0 / b) * ((a / b) - c) * (ebt - 1.0) - c * t
     return 1.0 - np.exp(res)
 
+def lamb(x,t):
+    a = x[0]
+    b = x[1]
+    c = x[2]
+    ebt = np.exp(-1.0 * b * t)
+
+    return (a * t - c) * ebt + c
+
+
 
 df = pd.read_excel("zika.xlsx")
 
@@ -44,14 +53,18 @@ tmax = df["age"].values[-1]
 
 t = np.linspace(tmin,tmax,1000)
 
-plt.plot(df["age"],df["ratio"],"o")
-plt.plot(t,least_squares(t),label="LS")
-plt.plot(t,model(x,t),label="OVO")
-plt.legend()
+fig, axs = plt.subplots(2,1)
+
+axs[0].plot(df["age"],df["ratio"],"o")
+axs[0].plot(t,least_squares(t),label="LS")
+axs[0].plot(t,model(x,t),label="OVO")
+
+axs[1].plot(t,lamb([0.051,0.33,0.003],t),label="LS")
+axs[1].plot(t,lamb(x,t),label="OVO")
+
+
 plt.show()
 plt.close()
 
 fig, ax = plt.subplots()
 ax = sns.boxplot(x=df["ratio"],ax=ax)
-
-# plt.show()

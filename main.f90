@@ -43,8 +43,8 @@ Program main
     max_iter_sub = 10000
     alpha = 0.5d0
     epsilon = 1.0d-7
-    delta = 1.0d-2
-    sigmin = 1.0d-2
+    delta = 1.0d-3
+    sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -186,7 +186,7 @@ Program main
             fxtrial = faux(q)
     
             ! Test the sufficient descent condition
-            if (fxtrial .lt. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
+            if (fxtrial .le. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
             if (iter_sub .ge. max_iter_sub) exit
 
             sigma = 2.0d0 * sigma
