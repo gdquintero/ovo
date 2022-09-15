@@ -7,7 +7,7 @@ Program main
     real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ebt,ti,a,b,c
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
     integer, allocatable :: Idelta(:)
-    logical :: box
+    logical :: box,outlier
 
     ! COMMON INTEGERS
     integer :: samples,q
@@ -37,14 +37,15 @@ Program main
     ! Set parameters
     n = 4
     samples = 34
-    outliers = 2
+    outlier = .true.
+    outliers = 6
     q = samples - outliers
-    max_iter = 100000
-    max_iter_sub = 100
+    max_iter = 1000000
+    max_iter_sub = 1000
     alpha = 0.5d0
     epsilon = 1.0d-7
-    delta = 0.001
-    sigmin = 0.05
+    delta = 5.0d-6
+    sigmin = 1.0d-1
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -54,7 +55,7 @@ Program main
         stop
     end if
   
-    call read_data()
+    call read_data(outlier)
 
     ! Coded subroutines
 
@@ -103,7 +104,8 @@ Program main
     else
         l(1:n-1) = 0.0d0
         l(n) = -1.0d+20 
-        u(1:n) = 1.0d+20
+        u(1:n-1) = 1.0d+20
+        u(n) = 0.0d0
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
@@ -202,8 +204,7 @@ Program main
         ! enddo
 
         opt_cond =  norm2(xtrial - xk)
-        ! print*, iter, iter_sub, opt_cond, m
-        print*,"Outliers: ", int(indices(samples-1)), int(indices(samples))
+        print*, iter, iter_sub, fxtrial, opt_cond, m
 
         if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
@@ -315,13 +316,18 @@ Program main
     !==============================================================================
     ! READ THE DATA
     !==============================================================================
-    subroutine read_data()
+    subroutine read_data(outlier)
         implicit none
 
+        logical, intent(in) :: outlier
         ! SCALARS
         integer :: i
 
-        Open(Unit = 10, File = "output/zika.txt", ACCESS = "SEQUENTIAL")
+        if (outlier) then
+            Open(Unit = 10, File = "output/zika_outliers.txt", ACCESS = "SEQUENTIAL")
+        else
+            Open(Unit = 10, File = "output/zika.txt", ACCESS = "SEQUENTIAL")
+        end if
 
         do i = 1, samples
             read(10,*) t(i), y(i)

@@ -28,7 +28,14 @@ def lamb(x,t):
 
     return (a * t - c) * ebt + c
 
-df = pd.read_excel("zika.xlsx")
+outlier = True
+
+if outlier:
+    df_file = "zika_outliers.xlsx"
+else:
+    df_file = "zika.xlsx"
+
+df = pd.read_excel(df_file)
 
 with open("output/xstarovo.txt") as f:
     lines = f.readlines()
@@ -46,14 +53,12 @@ tmax = df["age"].values[-1]
 t = np.linspace(tmin,tmax,1000)
 
 plt.plot(df["age"],df["ratio"],"ko")
-plt.plot(t,least_squares(t),label="LS",color="red")
 plt.plot(t,model(x,t),label="OVO",color="blue")
 plt.legend()
 
 plt.show()
 plt.close()
 
-plt.plot(t,lamb([0.051,0.33,0.003],t),label="LS",color="red")
 plt.plot(t,lamb(x,t),label="OVO",color="blue")
 plt.legend()
 
