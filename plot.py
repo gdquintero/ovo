@@ -1,7 +1,6 @@
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 def model(x,t):
     a = x[0]
@@ -31,16 +30,11 @@ def lamb(x,t):
 
 df = pd.read_excel("zika.xlsx")
 
-with open("output/zika.txt","w") as f:
-    for i in range(len(df["age"].values)):
-        f.write("%f %f\n" % (df["age"].values[i],df["ratio"].values[i]))
-
 with open("output/xstarovo.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
 
 x = np.empty(3)
-
 
 x[0] = float(xdata[0])
 x[1] = float(xdata[1])
@@ -51,20 +45,16 @@ tmax = df["age"].values[-1]
 
 t = np.linspace(tmin,tmax,1000)
 
-fig, axs = plt.subplots(2,1)
-
-axs[0].plot(df["age"],df["ratio"],"ko")
-axs[0].plot(t,least_squares(t),label="LS",color="red")
-axs[0].plot(t,model(x,t),label="OVO",color="blue")
-axs[0].legend()
-
-axs[1].plot(t,lamb([0.051,0.33,0.003],t),label="LS",color="red")
-axs[1].plot(t,lamb(x,t),label="OVO",color="blue")
-axs[1].legend()
+plt.plot(df["age"],df["ratio"],"ko")
+plt.plot(t,least_squares(t),label="LS",color="red")
+plt.plot(t,model(x,t),label="OVO",color="blue")
+plt.legend()
 
 plt.show()
 plt.close()
 
-fig, ax = plt.subplots()
-ax = sns.boxplot(data=df,x="ratio",whis=1.0,ax=ax)
-# plt.show()
+plt.plot(t,lamb([0.051,0.33,0.003],t),label="LS",color="red")
+plt.plot(t,lamb(x,t),label="OVO",color="blue")
+plt.legend()
+
+plt.show()

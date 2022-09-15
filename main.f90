@@ -121,6 +121,8 @@ Program main
     ! q-Order-Value function 
     fxk = faux(q)
 
+    print*,"Outliers: ", int(indices(samples-1)), int(indices(samples))
+
     call mount_Idelta(faux,indices,delta,Idelta,m)
 
     do
@@ -200,7 +202,8 @@ Program main
         ! enddo
 
         opt_cond =  norm2(xtrial - xk)
-        print*, iter, iter_sub, opt_cond, m
+        ! print*, iter, iter_sub, opt_cond, m
+        print*,"Outliers: ", int(indices(samples-1)), int(indices(samples))
 
         if (opt_cond .le. epsilon) exit
         if (iter .ge. max_iter) exit
