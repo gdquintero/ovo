@@ -29,8 +29,6 @@ def lamb(x,t):
 
     return (a * t - c) * ebt + c
 
-
-
 df = pd.read_excel("zika.xlsx")
 
 with open("output/zika.txt","w") as f:
@@ -68,5 +66,5 @@ plt.show()
 plt.close()
 
 fig, ax = plt.subplots()
-ax = sns.boxplot(x=df["ratio"],ax=ax)
-
+ax = sns.boxplot(data=df,x="ratio",whis=1.0,ax=ax)
+# plt.show()
