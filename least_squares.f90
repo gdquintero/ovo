@@ -4,9 +4,7 @@ program least_squares
     integer                     :: allocerr,i,k,info,lwork,nrhs,lda,ldb,m,n
 	real(kind=8),   allocatable :: data(:),A(:,:),b(:),tempo(:),work(:)
     integer,        allocatable :: jpvt(:)
-	real(kind=8)                :: rank, rcond = 1.0d-8
-
-    external :: export,readData,dgelsy
+	real(kind=8)                :: rank,rcond = 1.0d-8
 
     n = 3
     Open(Unit = 200, File = "output/days.txt", ACCESS = "SEQUENTIAL")
@@ -18,21 +16,14 @@ program least_squares
     lda = max(1,m)
     ldb = max(1,m,n)
 
-    allocate(data(m),tempo(m),A(lda,n),b(m-1),stat=allocerr)
+    allocate(data(m),tempo(m),A(lda,n),b(m-1),jpvt(n),work(max(1,lwork)),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
         write(*,*) 'Allocation error in main program'
         stop
     end if
 
-    allocate(jpvt(n),work(max(1,lwork)),stat=allocerr)
-
-    if ( allocerr .ne. 0 ) then
-        write(*,*) 'Allocation error in main program'
-        stop
-    end if
-
-    call readData(m,data)
+    call read_data(m,data)
 
     tempo(1:m) = (/(i,i=1,m)/)
 
@@ -51,27 +42,26 @@ program least_squares
     !==============================================================================
     ! EXPORT RESULT TO PLOT
     !==============================================================================
-    subroutine export(xtrial,x1,n)
+    subroutine export(xtrial,n)
         implicit none
 
         integer,        intent(in) :: n
         real(kind=8),   intent(in) :: xtrial(n),x1
 
-        Open(Unit = 30, File = "output/xstarleastsquares.txt", ACCESS = "SEQUENTIAL")
+        Open(Unit = 10, File = "output/xstarleastsquares.txt", ACCESS = "SEQUENTIAL")
 
-        write(30,*) x1
-        write(30,*) xtrial(1)
-        write(30,*) xtrial(2)
-        write(30,*) xtrial(3)
+        write(10,*) xtrial(1)
+        write(10,*) xtrial(2)
+        write(10,*) xtrial(3)
 
-        close(30)
+        close(10)
 
     end subroutine export
 
     !==============================================================================
     ! READ THE DATA CORRESPONDING TO THE NUMBER OF days DESIRED
     !==============================================================================
-    subroutine readData(days,y)
+    subroutine read_data(days,y)
         implicit none
 
         ! SCALARS
@@ -94,5 +84,5 @@ program least_squares
         enddo
 
         close(20)
-    end subroutine readData
+    end subroutine read_data
 end program least_squares
