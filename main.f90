@@ -3,9 +3,9 @@ Program main
 
     implicit none 
     
-    integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,kflag,outliers
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,opt_cond,gaux1,gaux2,ebt,ti,a,b,c
-    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:)
+    integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,j,kflag,outliers
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,gaux1,gaux2,ebt,ti,a,b,c
+    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:)
     integer, allocatable :: Idelta(:)
     logical :: box,outlier
 
@@ -43,12 +43,12 @@ Program main
     max_iter = 1000000
     max_iter_sub = 1000
     alpha = 0.5d0
-    epsilon = 1.0d-7
-    delta = 5.0d-6
-    sigmin = 1.0d-1
+    epsilon = 1.0d-6
+    delta = 1.0d-4
+    sigmin = 1.0d-2
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
-    faux(samples),indices(samples),Idelta(samples),stat=allocerr)
+    faux(samples),indices(samples),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
         write(*,*) 'Allocation error in main program'
@@ -123,8 +123,6 @@ Program main
     ! q-Order-Value function 
     fxk = faux(q)
 
-    print*,"Outliers: ", int(indices(samples-1)), int(indices(samples))
-
     call mount_Idelta(faux,indices,delta,Idelta,m)
 
     do
@@ -197,16 +195,31 @@ Program main
             iter_sub = iter_sub + 1
         end do ! End of internal iterations
 
-        opt_cond = 0.0d0
+        opt_cond(:) = 0.0d0
+        nu_l(:) = 0.0d0
+        nu_u(:) = 0.0d0
 
-        ! do i = 1, m
-        !     opt_cond = opt_cond + lambda(i) * norm2(grad(i,:))
-        ! enddo
+        do j = 1, n-1
+            if (xtrial(j) .le. l(j)) then 
+                do i = 1, m
+                    nu_l(j) = nu_l(j) + lambda(i) * grad(i,j)
+                end do
+            else if (xtrial(j) .ge. u(j)) then
+                do i = 1, m
+                    nu_u(j) = nu_u(j) - lambda(i) * grad(i,j)
+                end do
+            end if
+        end do
 
-        opt_cond =  norm2(xtrial - xk)
-        print*, iter, iter_sub, fxtrial, opt_cond, m
+        do i = 1, m
+            opt_cond(:) = opt_cond(:) + lambda(i) * grad(i,:)
+        enddo
 
-        if (opt_cond .le. epsilon) exit
+        opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
+
+        print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
+
+        if (norm2(opt_cond) .le. epsilon) exit
         if (iter .ge. max_iter) exit
 
         deallocate(lambda,equatn,linear,grad)
