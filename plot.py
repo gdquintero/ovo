@@ -43,9 +43,7 @@ with open("output/xstarovo.txt") as f:
 
 x = np.empty(3)
 
-x[0] = float(xdata[0])
-x[1] = float(xdata[1])
-x[2] = float(xdata[2])
+x[:] = xdata[:]
 
 tmin = df["age"].values[0]
 tmax = df["age"].values[-1]
