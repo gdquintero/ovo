@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 def func(t,a,b,c):
@@ -25,7 +24,3 @@ with open("output/xstarls.txt",'w') as f:
     f.write("%11.8f\n" % popt[0])
     f.write("%11.8f\n" % popt[1])
     f.write("%11.8f" % popt[2])
-
-plt.plot(df["age"].values,df["ratio"].values,"ko",label="data")
-plt.plot(df["age"].values,func(df["age"].values,*popt))
-# plt.show()

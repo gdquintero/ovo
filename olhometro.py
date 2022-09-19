@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
 def func(t,a,b,c):
@@ -35,11 +36,6 @@ else:
 
 df = pd.read_excel(df_file)
 
-error_ovo = mean_squared_error(df["ratio"].values,func(df["age"].values,*x_ovo))
-error_ls = mean_squared_error(df["ratio"].values,func(df["age"].values,*x_ls))
-
-print(error_ovo,error_ls)
-
 y_true = np.empty(len(df["age"]) - 4)
 y_pred_ovo = np.empty(len(df["age"]) - 4)
 y_pred_ls = np.empty(len(df["age"]) - 4)
@@ -53,7 +49,27 @@ y_pred_ovo[15:] = func(df["age"].values[19:],*x_ovo)
 y_pred_ls[:15] = func(df["age"].values[:15],*x_ls)
 y_pred_ls[15:] = func(df["age"].values[19:],*x_ls)
 
-error_ovo_outliers = mean_squared_error(y_true,y_pred_ovo)
-error_ls_outliers = mean_squared_error(y_true,y_pred_ls)
+error_ovo = mean_squared_error(y_true,y_pred_ovo)
+error_ls = mean_squared_error(y_true,y_pred_ls)
 
-print(error_ovo_outliers,error_ls_outliers)
+fig, ax = plt.subplots()
+
+ax.plot(df["age"].values,df["ratio"],"ko")
+lines = []
+lines = ax.plot(df["age"].values,func(df["age"].values,*x_ovo))
+lines += ax.plot(df["age"].values,func(df["age"].values,*x_ls))
+ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
+
+textstr = '\n'.join((
+    "Error OVO: %.6f" % error_ovo,
+    "Error LS: %.6f" % error_ls)
+)
+
+plt.text(1, 0.95, textstr,
+         ha="left", va="center",
+         bbox=dict(boxstyle="round",
+                   ec=(1., 0.5, 0.5),
+                   fc=(1., 0.8, 0.8),
+                   )
+         )
+plt.show()
