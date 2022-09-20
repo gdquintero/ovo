@@ -10,6 +10,12 @@ def func(t,a,b,c):
 
     return res
 
+def model(t,a,b,c):
+    ebt = np.exp(-1.0 * b * t)
+    res = (a * t - c) * ebt + c
+
+    return res
+
 with open("output/xstarovo.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
@@ -56,8 +62,8 @@ fig, ax = plt.subplots()
 
 ax.plot(df["age"].values,df["ratio"],"ko")
 lines = []
-lines = ax.plot(df["age"].values,func(df["age"].values,*x_ovo))
-lines += ax.plot(df["age"].values,func(df["age"].values,*x_ls))
+lines = ax.plot(df["age"].values,func(df["age"].values,*x_ovo),"b")
+lines += ax.plot(df["age"].values,func(df["age"].values,*x_ls),"r")
 ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
 
 textstr = '\n'.join((
@@ -65,11 +71,20 @@ textstr = '\n'.join((
     "Error LS: %.6f" % error_ls)
 )
 
-plt.text(1, 0.95, textstr,
+plt.text(0.5, 0.96, textstr,
          ha="left", va="center",
          bbox=dict(boxstyle="round",
-                   ec=(1., 0.5, 0.5),
-                   fc=(1., 0.8, 0.8),
+                   ec="#D5D2D2",
+                   fc="#EEEEEE",
                    )
          )
+         
+plt.show()
+plt.close()
+
+t = np.linspace(0,35,1000)
+
+plt.plot(t,model(t,*x_ovo),"b",label="OVO")
+plt.plot(t,model(t,*x_ls),"r",label="LS")
+plt.legend()
 plt.show()
