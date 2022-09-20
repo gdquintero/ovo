@@ -18,9 +18,11 @@ else:
 
 df = pd.read_excel(df_file)
 
-popt, pcov = curve_fit(func,df["age"].values,df["ratio"].values,bounds=(0, np.inf*np.ones(3)))
+popt, pcov = curve_fit(func,df["age"].values,df["ratio"].values,bounds=(0,np.inf * np.ones(3)))
 
 with open("output/xstarls.txt",'w') as f:
     f.write("%11.8f\n" % popt[0])
     f.write("%11.8f\n" % popt[1])
     f.write("%11.8f" % popt[2])
+
+print(popt)

@@ -38,14 +38,14 @@ Program main
     n = 4
     samples = 34
     outlier = .true.
-    outliers = 6
+    outliers = 4
     q = samples - outliers
     max_iter = 1000000
     max_iter_sub = 1000
     alpha = 0.5d0
     epsilon = 1.0d-6
-    delta = 1.0d-4
-    sigmin = 1.0d-2
+    delta = 1.0d-3
+    sigmin = 1.0d-1
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
@@ -92,8 +92,8 @@ Program main
     iter = 0
 
     ! Initial solution
-    xk(:) = 0.05
-    ! xk(:) = (/0.051,0.33,0.003/)
+    ! xk(:) = 0.05
+    xk(:) = (/0.051,0.33,0.003/)
 
     ! Box-constrained? 
     box = .true. 

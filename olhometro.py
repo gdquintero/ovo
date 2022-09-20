@@ -22,6 +22,7 @@ with open("output/xstarovo.txt") as f:
 
 x_ovo = np.empty(3)
 x_ls = np.empty(3)
+t = np.linspace(0,35,1000)
 
 for i in range(3):
     x_ovo[i] = float(xdata[i])
@@ -62,8 +63,8 @@ fig, ax = plt.subplots()
 
 ax.plot(df["age"].values,df["ratio"],"ko")
 lines = []
-lines = ax.plot(df["age"].values,func(df["age"].values,*x_ovo),"b")
-lines += ax.plot(df["age"].values,func(df["age"].values,*x_ls),"r")
+lines = ax.plot(t,func(t,*x_ovo),"b")
+lines += ax.plot(t,func(t,*x_ls),"r")
 ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
 
 textstr = '\n'.join((
@@ -81,8 +82,6 @@ plt.text(0.5, 0.96, textstr,
          
 plt.show()
 plt.close()
-
-t = np.linspace(0,35,1000)
 
 plt.plot(t,model(t,*x_ovo),"b",label="OVO")
 plt.plot(t,model(t,*x_ls),"r",label="LS")
