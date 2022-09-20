@@ -40,5 +40,3 @@ ax = sns.boxplot(data=df,x="ratio",whis=1.0,ax=ax)
 # plt.show()
 
 outliers = detect_outlier(df["ratio"])
-
-print(outliers)

@@ -16,25 +16,37 @@ def model(t,a,b,c):
 
     return res
 
+def wave(t,a,b,c,d):
+    return a * np.exp(b * np.sin(c * t)) + d
+
 with open("output/xstarovo.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
 
-x_ovo = np.empty(3)
-x_ls = np.empty(3)
-t = np.linspace(0,35,1000)
+mod = 1
+outlier = True
 
-for i in range(3):
+if mod == 0:
+    n = 3
+    outliers = 4
+    t = np.linspace(0,35,1000)
+else:
+    n = 4
+    outliers = 3
+    t = np.linspace(0,1.5 * np.pi,1000)
+
+x_ovo = np.empty(n)
+x_ls = np.empty(n)
+
+for i in range(n):
     x_ovo[i] = float(xdata[i])
 
 with open("output/xstarls.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
 
-for i in range(3):
+for i in range(n):
     x_ls[i] = float(xdata[i])
-
-outlier = True
 
 if outlier:
     df_file = "zika_outliers.xlsx"
