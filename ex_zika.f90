@@ -1,4 +1,4 @@
-Program main
+Program ex_zika
     use sort
 
     implicit none 
@@ -614,4 +614,4 @@ Program main
         flag = - 1
 
     end subroutine myevalhlp
-end Program main
+end Program ex_zika
