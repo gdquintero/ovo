@@ -4,7 +4,7 @@ Program ex_zika
     implicit none 
     
     integer :: allocerr,iter,iter_sub,max_iter,max_iter_sub,i,j,kflag,outliers
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,sinc,ebt,ti,a,b,c,d
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fxk,fxtrial,sinc,gaux,ti,a,b,c,d
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:)
     integer, allocatable :: Idelta(:)
     logical :: box,outlier
@@ -41,10 +41,10 @@ Program ex_zika
     outliers = 3
     q = samples - outliers
     max_iter = 1000000
-    max_iter_sub = 10000
+    max_iter_sub = 1000
     alpha = 0.5d0
     epsilon = 1.0d-6
-    delta = 1.0d5
+    delta = 1.0d-6
     sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
@@ -56,7 +56,6 @@ Program ex_zika
     end if
   
     call read_data()
-
 
     ! Coded subroutines
 
@@ -94,21 +93,28 @@ Program ex_zika
 
     ! Initial solution
     ! xk(:) = (/1.0d0,0.5d0,2.0d0,-1.0d0/)
-    xk(:) = (/-1.0d0,-1.0d0,0.0d0,2.0d0/)
+    xk(:) = (/1.0d0,1.0d0,1.0d0,1.0d0/)
 
     ! Box-constrained? 
     box = .true. 
 
     if (box .eqv. .false.) then
         l(1:n) = -1.0d+20
+
         u(1:n-1) = 1.0d+20
         u(n) = 0.0d0
     else
-        l(1:n-2) = 0.0d0
-        l(n-1) = -2.0d0
-        l(n) = -1.0d+20 
-        u(1:n-2) = 2.0d0
-        u(n-1:n) = 0.0d0
+        l(1) = 0.0d0
+        l(2) = 0.0d0
+        l(3) = 0.0d0
+        l(4) = -1.0d+20
+        l(5) = -1.0d+20
+
+        u(1) = 1.0d+20
+        u(2) = 1.0d+20
+        u(3) = 1.0d+20
+        u(4) = 0.0d0
+        u(5) = 1.0d+20
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
@@ -150,11 +156,14 @@ Program ex_zika
         do i = 1, m
             ti = t(Idelta(i))
             sinc = sin(c * ti)
+            gaux = model(xk,Idelta(i),n) - y(Idelta(i))
+
             grad(i,1) = exp(b * sinc)
             grad(i,2) = a * sinc * exp(b * sinc)
             grad(i,3) = a * b * ti * cos(c * ti) * exp(b * sinc)
             grad(i,4) = 1.0d0
-            grad(i,:) = model(xk,Idelta(i),n) - y(Idelta(i)) * grad(i,:)
+
+            grad(i,:) = gaux * grad(i,:)
         end do
 
         sigma = sigmin
@@ -310,20 +319,14 @@ Program ex_zika
     !==============================================================================
     ! MODEL TO BE FITTED TO THE DATA
     !==============================================================================
-    function model(x,i,n) result(res)
+    function model(x,i,n) result (res)
         implicit none 
 
         integer,        intent(in) :: n,i
         real(kind=8),   intent(in) :: x(n-1)
-        real(kind=8) :: res,a,b,c,d,ti
+        real(kind=8) :: res      
 
-        a = x(1)
-        b = x(2)
-        c = x(3)
-        d = x(4)
-        ti = t(i)
-
-        res = a * exp(b * sin(c * ti)) + d
+        res = x(1) * exp(x(2) * sin(x(3) * t(i))) + x(4)
 
     end function model
 
@@ -333,7 +336,6 @@ Program ex_zika
     subroutine read_data()
         implicit none
 
-        ! SCALARS
         integer :: i
 
         Open(Unit = 10, File = "output/wave.txt", ACCESS = "SEQUENTIAL")
@@ -367,7 +369,7 @@ Program ex_zika
 
         flag = 0
 
-        f =  x(n)
+        f = x(n)
 
     end subroutine myevalf
 
