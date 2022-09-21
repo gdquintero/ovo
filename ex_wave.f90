@@ -41,10 +41,10 @@ Program ex_zika
     outliers = 3
     q = samples - outliers
     max_iter = 1000000
-    max_iter_sub = 1000
+    max_iter_sub = 10000
     alpha = 0.5d0
-    epsilon = 1.0d-8
-    delta = 1.0d-2
+    epsilon = 1.0d-6
+    delta = 1.0d5
     sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
@@ -93,11 +93,11 @@ Program ex_zika
     iter = 0
 
     ! Initial solution
-    xk(:) = (/1.0d0,0.5d0,2.0d0,-1.0d0/)
-    ! xk = (/1.5d0,0.7d0,1.5d0,-0.7d0/)
+    ! xk(:) = (/1.0d0,0.5d0,2.0d0,-1.0d0/)
+    xk(:) = (/-1.0d0,-1.0d0,0.0d0,2.0d0/)
 
     ! Box-constrained? 
-    box = .false. 
+    box = .true. 
 
     if (box .eqv. .false.) then
         l(1:n) = -1.0d+20
