@@ -10,6 +10,7 @@ x = np.empty(4)
 x = (1.,0.5,2.,-1.)
 noise_factor = 0.04
 outliers = np.empty(3)
+ind = []
 
 outliers[0] = model(np.pi / 4.,*x) + 0.5
 outliers[1] = model(3. * np.pi / 4.,*x) - 0.5
@@ -19,15 +20,16 @@ y = model(t_data,*x)
 rng = np.random.default_rng()
 y_noise = noise_factor * rng.normal(size=t_data.size)
 y_data = y + y_noise
+j = 0
 
-# ind = np.argmin(abs(t_data - np.pi/4.))
-# y_data[ind] = outliers[0]
+for i in range(1,6,2):
+    ind.append(np.argmin(abs(t_data - i * np.pi/4.)))
+    y_data[ind[j]] = outliers[j]
+    j += 1
 
-# ind = np.argmin(abs(t_data - 3.*np.pi/4.))
-# y_data[ind] = outliers[1]
-
-# ind = np.argmin(abs(t_data - 5.*np.pi/4.))
-# y_data[ind] = outliers[2]
+with open("output/outlier_indices_wave.txt",'w') as f:
+    for i in range(3):
+        f.write("%i\n" % ind[i])
 
 with open("output/data_wave.txt",'w') as f:
     for i in range(t_data.size):

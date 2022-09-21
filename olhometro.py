@@ -23,7 +23,7 @@ with open("output/xstarovo.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
 
-model = 0
+model = 1
 outlier = True
 
 if model == 0:
@@ -71,38 +71,42 @@ if model == 0:
 else:
     df_file = "output/data_wave.txt"
     df = pd.read_csv(df_file,header=None, sep=" ")
-
+    
     y_true = np.empty(len(df) - outliers)
     y_pred_ovo = np.empty(len(df) - outliers)
     y_pred_ls = np.empty(len(df) - outliers)
 
-error_ovo = mean_squared_error(y_true,y_pred_ovo)
-error_ls = mean_squared_error(y_true,y_pred_ls)
+    with open("output/outlier_indices_wave.txt") as f:
+        lines = f.readlines()
+        outliers = [line.split()[0] for line in lines]
 
-fig, ax = plt.subplots()
+# error_ovo = mean_squared_error(y_true,y_pred_ovo)
+# error_ls = mean_squared_error(y_true,y_pred_ls)
 
-ax.plot(df[0].values,df[1].values,"ko")
-lines = []
-lines = ax.plot(t,func(t,*x_ovo),"b")
-lines += ax.plot(t,func(t,*x_ls),"r")
+# fig, ax = plt.subplots()
 
-ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
+# ax.plot(df[0].values,df[1].values,"ko")
+# lines = []
+# lines = ax.plot(t,func(t,*x_ovo),"b")
+# lines += ax.plot(t,func(t,*x_ls),"r")
 
-textstr = '\n'.join((
-    "Error OVO: %.6f" % error_ovo,
-    "Error LS: %.6f" % error_ls)
-)
+# ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
 
-plt.text(0.5, 0.96, textstr,
-         ha="left", va="center",
-         bbox=dict(boxstyle="round",
-                   ec="#D5D2D2",
-                   fc="#EEEEEE",
-                   )
-         )
+# textstr = '\n'.join((
+#     "Error OVO: %.6f" % error_ovo,
+#     "Error LS: %.6f" % error_ls)
+# )
+
+# plt.text(0.5, 0.96, textstr,
+#          ha="left", va="center",
+#          bbox=dict(boxstyle="round",
+#                    ec="#D5D2D2",
+#                    fc="#EEEEEE",
+#                    )
+#          )
          
-plt.show()
-plt.close()
+# plt.show()
+# plt.close()
 
 # plt.plot(t,func2(t,*x_ovo),"b",label="OVO")
 # plt.plot(t,func2(t,*x_ls),"r",label="LS")

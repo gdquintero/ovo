@@ -23,7 +23,7 @@ if model == 0:
         df_file = "output/zika.txt"
 
     df = pd.read_csv(df_file,header=None, sep=" ")
-    popt, pcov = curve_fit(func_zika,df[0].values,df[1].values,bounds=(0,np.inf * np.ones(3)))
+    popt, pcov = curve_fit(func_zika,df[0].values,df[1].values,bounds=(0.,np.inf * np.ones(3)))
 
     with open("output/xstarls.txt",'w') as f:
         f.write("%11.8f\n" % popt[0])
