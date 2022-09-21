@@ -14,16 +14,16 @@ def func_wave(t,a,b,c,d):
     return a * np.exp(b * np.sin(c * t)) + d
 
 outlier = True
-model = 1
+model = 0
 
 if model == 0:
     if outlier:
-        df_file = "zika_outliers.xlsx"
+        df_file = "output/zika_outliers.txt"
     else:
-        df_file = "zika.xlsx"
+        df_file = "output/zika.txt"
 
-    df = pd.read_excel(df_file)
-    popt, pcov = curve_fit(func_zika,df["age"].values,df["ratio"].values,bounds=(0,np.inf * np.ones(3)))
+    df = pd.read_csv(df_file,header=None, sep=" ")
+    popt, pcov = curve_fit(func_zika,df[0].values,df[1].values,bounds=(0,np.inf * np.ones(3)))
 
     with open("output/xstarls.txt",'w') as f:
         f.write("%11.8f\n" % popt[0])
@@ -39,10 +39,3 @@ else:
         f.write("%11.8f\n" % popt[1])
         f.write("%11.8f\n" % popt[2])
         f.write("%11.8f" % popt[3])
-
-
-t = np.linspace(0,1.5 * np.pi,1000)
-
-plt.plot(df[0].values,df[1].values,"o")
-plt.plot(t,func_wave(t,*popt))
-plt.show()

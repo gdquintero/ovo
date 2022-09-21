@@ -20,14 +20,14 @@ rng = np.random.default_rng()
 y_noise = noise_factor * rng.normal(size=t_data.size)
 y_data = y + y_noise
 
-ind = np.argmin(abs(t_data - np.pi/4.))
-y_data[ind] = outliers[0]
+# ind = np.argmin(abs(t_data - np.pi/4.))
+# y_data[ind] = outliers[0]
 
-ind = np.argmin(abs(t_data - 3.*np.pi/4.))
-y_data[ind] = outliers[1]
+# ind = np.argmin(abs(t_data - 3.*np.pi/4.))
+# y_data[ind] = outliers[1]
 
-ind = np.argmin(abs(t_data - 5.*np.pi/4.))
-y_data[ind] = outliers[2]
+# ind = np.argmin(abs(t_data - 5.*np.pi/4.))
+# y_data[ind] = outliers[2]
 
 with open("output/data_wave.txt",'w') as f:
     for i in range(t_data.size):

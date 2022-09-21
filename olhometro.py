@@ -10,7 +10,7 @@ def func(t,a,b,c):
 
     return res
 
-def model(t,a,b,c):
+def func2(t,a,b,c):
     ebt = np.exp(-1.0 * b * t)
     res = (a * t - c) * ebt + c
 
@@ -23,10 +23,10 @@ with open("output/xstarovo.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
 
-mod = 1
+model = 0
 outlier = True
 
-if mod == 0:
+if model == 0:
     n = 3
     outliers = 4
     t = np.linspace(0,35,1000)
@@ -48,35 +48,44 @@ with open("output/xstarls.txt") as f:
 for i in range(n):
     x_ls[i] = float(xdata[i])
 
-if outlier:
-    df_file = "zika_outliers.xlsx"
+if model == 0:
+    if outlier:
+        df_file = "output/zika_outliers.txt"
+    else:
+        df_file = "output/zika.txt"
+
+    df = pd.read_csv(df_file,header=None, sep=" ")
+
+    y_true = np.empty(len(df) - outliers)
+    y_pred_ovo = np.empty(len(df) - outliers)
+    y_pred_ls = np.empty(len(df) - outliers)
+
+    y_true[:15] = df[1].values[:15]
+    y_true[15:] = df[1].values[19:]
+
+    y_pred_ovo[:15] = func(df[0].values[:15],*x_ovo)
+    y_pred_ovo[15:] = func(df[0].values[19:],*x_ovo)
+
+    y_pred_ls[:15] = func(df[0].values[:15],*x_ls)
+    y_pred_ls[15:] = func(df[0].values[19:],*x_ls)
 else:
-    df_file = "zika.xlsx"
+    df_file = "output/data_wave.txt"
+    df = pd.read_csv(df_file,header=None, sep=" ")
 
-df = pd.read_excel(df_file)
-
-y_true = np.empty(len(df["age"]) - 4)
-y_pred_ovo = np.empty(len(df["age"]) - 4)
-y_pred_ls = np.empty(len(df["age"]) - 4)
-
-y_true[:15] = df["ratio"].values[:15]
-y_true[15:] = df["ratio"].values[19:]
-
-y_pred_ovo[:15] = func(df["age"].values[:15],*x_ovo)
-y_pred_ovo[15:] = func(df["age"].values[19:],*x_ovo)
-
-y_pred_ls[:15] = func(df["age"].values[:15],*x_ls)
-y_pred_ls[15:] = func(df["age"].values[19:],*x_ls)
+    y_true = np.empty(len(df) - outliers)
+    y_pred_ovo = np.empty(len(df) - outliers)
+    y_pred_ls = np.empty(len(df) - outliers)
 
 error_ovo = mean_squared_error(y_true,y_pred_ovo)
 error_ls = mean_squared_error(y_true,y_pred_ls)
 
 fig, ax = plt.subplots()
 
-ax.plot(df["age"].values,df["ratio"],"ko")
+ax.plot(df[0].values,df[1].values,"ko")
 lines = []
 lines = ax.plot(t,func(t,*x_ovo),"b")
 lines += ax.plot(t,func(t,*x_ls),"r")
+
 ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
 
 textstr = '\n'.join((
@@ -95,7 +104,7 @@ plt.text(0.5, 0.96, textstr,
 plt.show()
 plt.close()
 
-plt.plot(t,model(t,*x_ovo),"b",label="OVO")
-plt.plot(t,model(t,*x_ls),"r",label="LS")
-plt.legend()
-plt.show()
+# plt.plot(t,func2(t,*x_ovo),"b",label="OVO")
+# plt.plot(t,func2(t,*x_ls),"r",label="LS")
+# plt.legend()
+# plt.show()
