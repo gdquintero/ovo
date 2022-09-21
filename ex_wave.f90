@@ -36,16 +36,16 @@ Program ex_zika
 
     ! Set parameters
     n = 5
-    samples = 34
+    samples = 50
     outlier = .true.
-    outliers = 4
+    outliers = 3
     q = samples - outliers
     max_iter = 1000000
     max_iter_sub = 1000
     alpha = 0.5d0
-    epsilon = 1.0d-6
-    delta = 1.0d-3
-    sigmin = 1.0d-1
+    epsilon = 1.0d-8
+    delta = 1.0d-2
+    sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
@@ -55,7 +55,8 @@ Program ex_zika
         stop
     end if
   
-    call read_data(outlier)
+    call read_data()
+
 
     ! Coded subroutines
 
@@ -92,20 +93,22 @@ Program ex_zika
     iter = 0
 
     ! Initial solution
-    ! xk(:) = 0.05
-    xk(:) = (/0.051,0.33,0.003/)
+    xk(:) = (/1.0d0,0.5d0,2.0d0,-1.0d0/)
+    ! xk = (/1.5d0,0.7d0,1.5d0,-0.7d0/)
 
     ! Box-constrained? 
-    box = .true. 
+    box = .false. 
 
     if (box .eqv. .false.) then
         l(1:n) = -1.0d+20
-        u(1:n) = 1.0d+20
-    else
-        l(1:n-1) = 0.0d0
-        l(n) = -1.0d+20 
         u(1:n-1) = 1.0d+20
         u(n) = 0.0d0
+    else
+        l(1:n-2) = 0.0d0
+        l(n-1) = -2.0d0
+        l(n) = -1.0d+20 
+        u(1:n-2) = 2.0d0
+        u(n-1:n) = 0.0d0
     endif
 
     indices(:) = (/(i, i = 1, samples)/)
@@ -212,7 +215,8 @@ Program ex_zika
             opt_cond(:) = opt_cond(:) + lambda(i) * grad(i,:)
         enddo
 
-        opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
+        ! opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
+        opt_cond(:) = xtrial(:) - xk(:)
 
         print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
 
@@ -247,6 +251,7 @@ Program ex_zika
         write(10,*) xsol(1)
         write(10,*) xsol(2)
         write(10,*) xsol(3)
+        write(10,*) xsol(4)
 
         close(10)
 
@@ -325,18 +330,13 @@ Program ex_zika
     !==============================================================================
     ! READ THE DATA
     !==============================================================================
-    subroutine read_data(outlier)
+    subroutine read_data()
         implicit none
 
-        logical, intent(in) :: outlier
         ! SCALARS
         integer :: i
 
-        if (outlier) then
-            Open(Unit = 10, File = "output/zika_outliers.txt", ACCESS = "SEQUENTIAL")
-        else
-            Open(Unit = 10, File = "output/zika.txt", ACCESS = "SEQUENTIAL")
-        end if
+        Open(Unit = 10, File = "output/wave.txt", ACCESS = "SEQUENTIAL")
 
         do i = 1, samples
             read(10,*) t(i), y(i)

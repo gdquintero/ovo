@@ -31,7 +31,7 @@ with open("output/outlier_indices_wave.txt",'w') as f:
     for i in range(3):
         f.write("%i\n" % ind[i])
 
-with open("output/data_wave.txt",'w') as f:
+with open("output/wave.txt",'w') as f:
     for i in range(t_data.size):
         f.write("%f %f\n" % (t_data[i],y_data[i]))
 

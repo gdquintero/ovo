@@ -14,7 +14,7 @@ def func_wave(t,a,b,c,d):
     return a * np.exp(b * np.sin(c * t)) + d
 
 outlier = True
-model = 0
+model = 1
 
 if model == 0:
     if outlier:
@@ -30,7 +30,7 @@ if model == 0:
         f.write("%11.8f\n" % popt[1])
         f.write("%11.8f" % popt[2])
 else:
-    df_file = "output/data_wave.txt"
+    df_file = "output/wave.txt"
     df = pd.read_csv(df_file,header=None, sep=" ")
     popt, pcov = curve_fit(func_wave,df[0].values,df[1].values,method='dogbox',maxfev=100000)
     

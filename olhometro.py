@@ -69,7 +69,7 @@ if model == 0:
     y_pred_ls[:15] = func(df[0].values[:15],*x_ls)
     y_pred_ls[15:] = func(df[0].values[19:],*x_ls)
 else:
-    df_file = "output/data_wave.txt"
+    df_file = "output/wave.txt"
     df = pd.read_csv(df_file,header=None, sep=" ")
     
     y_true = np.empty(len(df) - outliers)
@@ -79,18 +79,34 @@ else:
     with open("output/outlier_indices_wave.txt") as f:
         lines = f.readlines()
         outliers = [line.split()[0] for line in lines]
+        
+    for i in range(3):
+        outliers[i] = int(outliers[i])
 
-# error_ovo = mean_squared_error(y_true,y_pred_ovo)
-# error_ls = mean_squared_error(y_true,y_pred_ls)
+    j = 0
 
-# fig, ax = plt.subplots()
+    for i in range(df[0].size):
+        if not i in outliers:
+            y_true[j] = df[1].values[i]
+            y_pred_ovo[j] = wave(df[0].values[i],*x_ovo)
+            y_pred_ls[j] = wave(df[0].values[i],*x_ls)
+            j += 1
 
-# ax.plot(df[0].values,df[1].values,"ko")
-# lines = []
-# lines = ax.plot(t,func(t,*x_ovo),"b")
-# lines += ax.plot(t,func(t,*x_ls),"r")
+error_ovo = mean_squared_error(y_true,y_pred_ovo)
+error_ls = mean_squared_error(y_true,y_pred_ls)
 
-# ax.legend(lines[:],['OVO', 'Least Squares'],loc='upper right', frameon=False)
+fig, ax = plt.subplots()
+
+ax.plot(df[0].values,df[1].values,"ko")
+lines = []
+if model == 0:
+    lines = ax.plot(t,func(t,*x_ovo),"b")
+    lines += ax.plot(t,func(t,*x_ls),"r")
+else:
+    lines = ax.plot(t,wave(t,*x_ovo),"b")
+    lines += ax.plot(t,wave(t,*x_ls),"r")
+
+ax.legend(lines[:],['OVO', 'Least Squares'],loc='lower right', frameon=False)
 
 # textstr = '\n'.join((
 #     "Error OVO: %.6f" % error_ovo,
@@ -105,7 +121,7 @@ else:
 #                    )
 #          )
          
-# plt.show()
+plt.show()
 # plt.close()
 
 # plt.plot(t,func2(t,*x_ovo),"b",label="OVO")
