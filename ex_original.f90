@@ -1,4 +1,4 @@
-Program ex_wave
+Program ex_original
     use sort
 
     implicit none 
@@ -612,4 +612,4 @@ Program ex_wave
         flag = - 1
 
     end subroutine myevalhlp
-end Program ex_wave
+end Program ex_original

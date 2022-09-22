@@ -68,6 +68,7 @@ if model == 0:
 
     y_pred_ls[:15] = func(df[0].values[:15],*x_ls)
     y_pred_ls[15:] = func(df[0].values[19:],*x_ls)
+    
 else:
     df_file = "output/wave.txt"
     df = pd.read_csv(df_file,header=None, sep=" ")
