@@ -16,6 +16,9 @@ def func2(t,a,b,c):
 
     return res
 
+def original(t,a,b,c,d):
+    return a + b * t + c * (t**2) + d * (t**3)
+
 def wave(t,a,b,c,d):
     return a * np.exp(b * np.sin(c * t)) + d
 
@@ -23,17 +26,23 @@ with open("output/xstarovo.txt") as f:
     lines = f.readlines()
     xdata = [line.split()[0] for line in lines]
 
-model = 1
+model = 2
 outlier = True
 
 if model == 0:
     n = 3
     outliers = 4
     t = np.linspace(0,35,1000)
-else:
+
+elif model == 1:
     n = 4
     outliers = 3
     t = np.linspace(0,1.5 * np.pi,1000)
+
+else:
+    n = 4
+    outliers = 10
+    t = np.linspace(-1.,3.5,46)
 
 x_ovo = np.empty(n)
 x_ls = np.empty(n)
@@ -68,8 +77,8 @@ if model == 0:
 
     y_pred_ls[:15] = func(df[0].values[:15],*x_ls)
     y_pred_ls[15:] = func(df[0].values[19:],*x_ls)
-    
-else:
+
+elif model == 1:
     df_file = "output/wave.txt"
     df = pd.read_csv(df_file,header=None, sep=" ")
     
@@ -93,6 +102,23 @@ else:
             y_pred_ls[j] = wave(df[0].values[i],*x_ls)
             j += 1
 
+else: 
+    df_file = "output/original.txt"
+    df = pd.read_csv(df_file,header=None, sep=" ")
+
+    y_true = np.empty(len(df) - outliers)
+    y_pred_ovo = np.empty(len(df) - outliers)
+    y_pred_ls = np.empty(len(df) - outliers)
+
+    y_true[:6] = df[1].values[:6]
+    y_true[6:] = df[1].values[6+outliers:]
+
+    y_pred_ovo[:6] = original(df[0].values[:6],*x_ovo)
+    y_pred_ovo[6:] = original(df[0].values[6+outliers:],*x_ovo)
+
+    y_pred_ls[:6] = original(df[0].values[:6],*x_ls)
+    y_pred_ls[6:] = original(df[0].values[6+outliers:],*x_ls)
+
 error_ovo = mean_squared_error(y_true,y_pred_ovo)
 error_ls = mean_squared_error(y_true,y_pred_ls)
 
@@ -100,12 +126,18 @@ fig, ax = plt.subplots()
 
 ax.plot(df[0].values,df[1].values,"ko")
 lines = []
+
 if model == 0:
     lines = ax.plot(t,func(t,*x_ovo),"b")
     lines += ax.plot(t,func(t,*x_ls),"r")
-else:
+
+elif model == 1:
     lines = ax.plot(t,wave(t,*x_ovo),"b")
     lines += ax.plot(t,wave(t,*x_ls),"r")
+    
+else: 
+    lines = ax.plot(t,original(t,*x_ovo),"b")
+    lines += ax.plot(t,original(t,*x_ls),"r")
 
 ax.legend(lines[:],['OVO', 'Least Squares'],loc='lower right', frameon=False)
 

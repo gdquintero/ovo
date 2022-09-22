@@ -47,3 +47,15 @@ else:
     df_file = "output/original.txt"
     df = pd.read_csv(df_file,header=None, sep=" ")
     popt, pcov = curve_fit(func_original,df[0].values,df[1].values,method='dogbox',maxfev=100000)
+
+    with open("output/xstarls.txt",'w') as f:
+        f.write("%11.8f\n" % popt[0])
+        f.write("%11.8f\n" % popt[1])
+        f.write("%11.8f\n" % popt[2])
+        f.write("%11.8f" % popt[3])
+
+t = np.linspace(-1.,3.5,1000)
+
+plt.plot(df[0],df[1],"*")
+plt.plot(t,func_original(t,*popt))
+# plt.show()

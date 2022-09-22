@@ -36,15 +36,15 @@ Program ex_original
 
     ! Set parameters
     n = 5
-    samples = 50
+    samples = 46
     outlier = .true.
-    outliers = 3
+    outliers = 10
     q = samples - outliers
     max_iter = 1000000
     max_iter_sub = 1000
     alpha = 0.5d0
     epsilon = 1.0d-6
-    delta = 1.0d-6
+    delta = 1.0d-4
     sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
@@ -92,8 +92,7 @@ Program ex_original
     iter = 0
 
     ! Initial solution
-    ! xk(:) = (/1.0d0,0.5d0,2.0d0,-1.0d0/)
-    xk(:) = (/1.0d0,1.0d0,1.0d0,1.0d0/)
+    xk(:) = (/1.0d0,1.0d0,-1.0d0,1.0d0/)
 
     ! Box-constrained? 
     box = .true. 
@@ -106,14 +105,14 @@ Program ex_original
     else
         l(1) = 0.0d0
         l(2) = 0.0d0
-        l(3) = 0.0d0
-        l(4) = -1.0d+20
+        l(3) = -1.0d+20
+        l(4) = 0.0d0
         l(5) = -1.0d+20
 
         u(1) = 1.0d+20
         u(2) = 1.0d+20
-        u(3) = 1.0d+20
-        u(4) = 0.0d0
+        u(3) = 0.0d0
+        u(4) = 1.0d+20
         u(5) = 1.0d+20
     endif
 
@@ -148,20 +147,14 @@ Program ex_original
         linear(:) = .false.
         lambda(:) = 0.0d0
 
-        a = xk(1)
-        b = xk(2)
-        c = xk(3)
-        d = xk(4)
-
         do i = 1, m
             ti = t(Idelta(i))
-            sinc = sin(c * ti)
             gaux = model(xk,Idelta(i),n) - y(Idelta(i))
 
-            grad(i,1) = exp(b * sinc)
-            grad(i,2) = a * sinc * exp(b * sinc)
-            grad(i,3) = a * b * ti * cos(c * ti) * exp(b * sinc)
-            grad(i,4) = 1.0d0
+            grad(i,1) = 1.0d0
+            grad(i,2) = ti
+            grad(i,3) = ti**2
+            grad(i,4) = ti**3
 
             grad(i,:) = gaux * grad(i,:)
         end do
@@ -326,7 +319,7 @@ Program ex_original
         real(kind=8),   intent(in) :: x(n-1)
         real(kind=8) :: res      
 
-        res = x(1) * exp(x(2) * sin(x(3) * t(i))) + x(4)
+        res = x(1) + x(2) * t(i) + x(3) * (t(i)**2) + x(4) * (t(i)**3)
 
     end function model
 
@@ -338,7 +331,7 @@ Program ex_original
 
         integer :: i
 
-        Open(Unit = 10, File = "output/wave.txt", ACCESS = "SEQUENTIAL")
+        Open(Unit = 10, File = "output/original.txt", ACCESS = "SEQUENTIAL")
 
         do i = 1, samples
             read(10,*) t(i), y(i)
