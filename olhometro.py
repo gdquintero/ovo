@@ -141,20 +141,49 @@ else:
 
 ax.legend(lines[:],['OVO', 'Least Squares'],loc='lower right', frameon=False)
 
-# textstr = '\n'.join((
-#     "Error OVO: %.6f" % error_ovo,
-#     "Error LS: %.6f" % error_ls)
-# )
+if model == 0:
+    textstr = '\n'.join((
+        "Error OVO: %.6f" % error_ovo,
+        "Error LS: %.6f" % error_ls)
+    )
 
-# plt.text(0.5, 0.96, textstr,
-#          ha="left", va="center",
-#          bbox=dict(boxstyle="round",
-#                    ec="#D5D2D2",
-#                    fc="#EEEEEE",
-#                    )
-#          )
-         
-plt.show()
+    plt.text(0.5, 0.96, textstr,
+            ha="left", va="center",
+            bbox=dict(boxstyle="round",
+                    ec="#D5D2D2",
+                    fc="#EEEEEE",
+                    )
+            )
+elif model == 2:
+    textstr = '\n'.join((
+        "Error OVO: %.6f" % error_ovo,
+        "Error LS: %.6f" % error_ls)
+    )
+
+    plt.text(-1, 14.5, textstr,
+            ha="left", va="center",
+            bbox=dict(boxstyle="round",
+                    ec="#D5D2D2",
+                    fc="#EEEEEE",
+                    )
+            )
+else:
+    textstr = '\n'.join((
+        "Error OVO: %.6f" % error_ovo,
+        "Error LS: %.6f" % error_ls)
+    )
+
+    plt.text(0, -0.75, textstr,
+            ha="left", va="center",
+            bbox=dict(boxstyle="round",
+                    ec="#D5D2D2",
+                    fc="#EEEEEE",
+                    )
+            )
+
+
+plt.savefig("fig",format='pdf')    
+# plt.show()
 # plt.close()
 
 # plt.plot(t,func2(t,*x_ovo),"b",label="OVO")
