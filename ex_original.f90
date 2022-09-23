@@ -44,8 +44,8 @@ Program ex_original
     max_iter_sub = 1000
     alpha = 0.5d0
     epsilon = 1.0d-6
-    delta = 1.0d-4
-    sigmin = 1.0d0
+    delta = 1.0d-6
+    sigmin = 1.0d-3
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
@@ -92,16 +92,16 @@ Program ex_original
     iter = 0
 
     ! Initial solution
-    xk(:) = (/1.0d0,1.0d0,-1.0d0,1.0d0/)
+    xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
     ! Box-constrained? 
-    box = .true. 
+    box = .false. 
 
     if (box .eqv. .false.) then
         l(1:n) = -1.0d+20
 
-        u(1:n-1) = 1.0d+20
-        u(n) = 0.0d0
+        u(1:n) = 1.0d+20
+        ! u(n) = 0.0d0
     else
         l(1) = 0.0d0
         l(2) = 0.0d0

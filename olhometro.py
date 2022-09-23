@@ -182,8 +182,8 @@ else:
             )
 
 
-plt.savefig("fig",format='pdf')    
-# plt.show()
+# plt.savefig("fig",format='pdf')    
+plt.show()
 # plt.close()
 
 # plt.plot(t,func2(t,*x_ovo),"b",label="OVO")
