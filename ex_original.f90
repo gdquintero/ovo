@@ -3,9 +3,9 @@ Program ex_original
 
     implicit none 
     
-    integer :: allocerr,i,j,size_delta_grid,size_sigmin_grid
-    real(kind=8) :: alpha,epsilon,delta,sup_delta,sigmin,sup_sigmin,fobj,fxk,fxtrial,gaux,ti
-    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
+    integer :: allocerr,i,j,k_delta,k_sigma
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,fxk,fxtrial,gaux,ti
+    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:,:),sigmin_grid(:,:)
     integer, allocatable :: Idelta(:)
     integer, dimension(3) :: optimal_ind
     logical :: box
@@ -39,16 +39,14 @@ Program ex_original
     samples = 46
     alpha = 0.5d0
     epsilon = 1.0d-6
-    size_delta_grid = 10
-    size_sigmin_grid = 10
-    sup_delta = 1.0d0
-    sup_sigmin = 10.0d0
+    k_delta = 8
+    k_sigma= 8
     ! delta = 1.0d-1
     ! sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
-    faux(samples),indices(samples),delta_grid(size_delta_grid+1),&
-    sigmin_grid(size_sigmin_grid+1),Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
+    faux(samples),indices(samples),delta_grid(k_delta+1,9),sigmin_grid(k_sigma+1,9),&
+    Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
         write(*,*) 'Allocation error in main program'
@@ -93,26 +91,26 @@ Program ex_original
     box = .false. 
 
     ! Discretization of delta and sigmin
-    do i = 1, size_delta_grid+1
-        delta_grid(i) = dble(i-1) / dble(size_delta_grid)
+    do i = 0, k_delta
+        do j = 1, 9
+            delta_grid(i+1,j) = 10.d0**(-i) * dble(j)
+        end do
     end do
 
-    do i = 1, size_sigmin_grid+1
-        sigmin_grid(i) = dble(i-1) / dble(size_sigmin_grid)
+    do i = 0, k_sigma
+        do j = 1, 9
+            sigmin_grid(i+1,j) = 10.d0**(-i) * dble(j)
+        end do
     end do
 
-    print*, sigmin_grid
-
-    ! do q = 1, samples
-    !     do i = 1, size_delta_grid
-    !         do j = 1, size_sigmin_grid
-    !             delta = 
-    !             call ovo_algorithm(fobj)
-    !         end do
-    !     end do
-    ! end do
-
-    
+    do q = 1, samples
+        do i = 1, size_delta_grid
+            do j = 1, size_sigmin_grid
+                delta = 
+                call ovo_algorithm(fobj)
+            end do
+        end do
+    end do
 
     ! print*, xk
     ! call export(xk)
