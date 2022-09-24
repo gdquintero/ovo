@@ -11,7 +11,7 @@ Program ex_original
     logical :: box
 
     ! COMMON INTEGERS
-    integer :: samples,q
+    integer :: samples,q 
 
     ! COMMON SCALARS
     real(kind=8) :: sigma
@@ -38,9 +38,9 @@ Program ex_original
     n = 5
     samples = 46
     alpha = 0.5d0
-    epsilon = 1.0d-6
-    k_delta = 2
-    k_sigmin= 2
+    epsilon = 1.0d-4
+    k_delta = 6
+    k_sigmin= 4
     size_delta_grid = 9 * (k_delta + 1)
     size_sigmin_grid = 9 * (k_sigmin + 1)
     ! delta = 1.0d-1
@@ -102,7 +102,7 @@ Program ex_original
     end do
 
     k = 1
-    do i = 0, k_delta
+    do i = 0, k_sigmin
         do j = 9, 1, -1
             sigmin_grid(k) = 10.d0**(-i) * dble(j)
             k = k + 1
@@ -119,6 +119,7 @@ Program ex_original
     do q = 2, samples
         do i = 1, size_delta_grid
             do j = 1, size_sigmin_grid
+                print*, i,j
                 delta = delta_grid(i)
                 sigmin = sigmin_grid(j)
                 call ovo_algorithm(aux)
@@ -128,6 +129,7 @@ Program ex_original
                 end if
             end do
         end do
+        ! print*, (100.d0 / samples) * q, "%"
     end do
 
     q = optimal_ind(1)
