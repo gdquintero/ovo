@@ -97,7 +97,11 @@ Program ex_original
         delta_grid(i) = dble(i-1) / dble(size_delta_grid)
     end do
 
-    print*, delta_grid
+    do i = 1, size_sigmin_grid+1
+        sigmin_grid(i) = dble(i-1) / dble(size_sigmin_grid)
+    end do
+
+    print*, sigmin_grid
 
     ! do q = 1, samples
     !     do i = 1, size_delta_grid
