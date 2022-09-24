@@ -130,8 +130,14 @@ Program ex_original
         end do
     end do
 
-    ! print*, xk
-    ! call export(xk)
+    q = optimal_ind(1)
+    delta = delta_grid(optimal_ind(2))
+    sigmin = sigmin_grid(optimal_ind(3))
+
+    print*, optimal_ind
+
+    call ovo_algorithm(fobj)
+    call export(xk)
 
     CONTAINS
 
