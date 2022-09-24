@@ -3,7 +3,7 @@ Program ex_original
 
     implicit none 
     
-    integer :: allocerr,i,j,k_delta,k_sigma,size_delta_grid,size_sigmin_grid
+    integer :: allocerr,i,j,k,k_delta,k_sigmin,size_delta_grid,size_sigmin_grid
     real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,fxk,fxtrial,gaux,ti
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
     integer, allocatable :: Idelta(:)
@@ -40,9 +40,9 @@ Program ex_original
     alpha = 0.5d0
     epsilon = 1.0d-6
     k_delta = 8
-    k_sigma= 8
+    k_sigmin= 8
     size_delta_grid = 9 * (k_delta + 1)
-    size_sigmin_grid = 9 * (k_sigma + 1)
+    size_sigmin_grid = 9 * (k_sigmin + 1)
     ! delta = 1.0d-1
     ! sigmin = 1.0d0
 
@@ -93,24 +93,33 @@ Program ex_original
     box = .false. 
 
     ! Discretization of delta and sigmin
+    k = 1
     do i = 0, k_delta
         do j = 9, 1, -1
-            ! delta_grid(i+1,j) = 10.d0**(-i) * dble(j)
-            print*, j
+            delta_grid(k) = 10.d0**(-i) * dble(j)
+            k = k + 1
         end do
     end do
 
+    k = 1
+    do i = 0, k_delta
+        do j = 9, 1, -1
+            sigmin_grid(k) = 10.d0**(-i) * dble(j)
+            k = k + 1
+        end do
+    end do
 
-
-    ! ! "Heuristics"
-    ! do q = 1, samples
-    !     do i = 1, size_delta_grid
-    !         do j = 1, size_sigmin_grid
-    !             delta = 
-    !             call ovo_algorithm(fobj)
-    !         end do
-    !     end do
-    ! end do
+    ! "Heuristics"
+    do q = 1, samples
+        do i = 1, size_delta_grid
+            do j = 1, size_sigmin_grid
+                delta = delta_grid(i)
+                sigmin = sigmin_grid(j)
+                call ovo_algorithm(fobj)
+                print*, i,j
+            end do
+        end do
+    end do
 
     ! print*, xk
     ! call export(xk)
@@ -128,8 +137,8 @@ Program ex_original
         logical,        pointer :: equatn(:),linear(:)
         real(kind=8),   pointer :: lambda(:)
 
-        integer, parameter  :: max_iter = 10000, max_iter_sub = 1000, kflag = 2
-        integer             :: iter,iter_sub
+        integer, parameter  :: max_iter = 100000, max_iter_sub = 1000, kflag = 2
+        integer             :: iter,iter_sub,i,j
 
         iter = 0
 
