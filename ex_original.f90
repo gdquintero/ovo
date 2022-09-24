@@ -3,9 +3,9 @@ Program ex_original
 
     implicit none 
     
-    integer :: allocerr,i,j,k_delta,k_sigma
+    integer :: allocerr,i,j,k_delta,k_sigma,size_delta_grid,size_sigmin_grid
     real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,fxk,fxtrial,gaux,ti
-    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:,:),sigmin_grid(:,:)
+    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
     integer, allocatable :: Idelta(:)
     integer, dimension(3) :: optimal_ind
     logical :: box
@@ -41,11 +41,13 @@ Program ex_original
     epsilon = 1.0d-6
     k_delta = 8
     k_sigma= 8
+    size_delta_grid = 9 * (k_delta + 1)
+    size_sigmin_grid = 9 * (k_sigma + 1)
     ! delta = 1.0d-1
     ! sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
-    faux(samples),indices(samples),delta_grid(k_delta+1,9),sigmin_grid(k_sigma+1,9),&
+    faux(samples),indices(samples),delta_grid(size_delta_grid),sigmin_grid(size_sigmin_grid),&
     Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
@@ -92,25 +94,23 @@ Program ex_original
 
     ! Discretization of delta and sigmin
     do i = 0, k_delta
-        do j = 1, 9
-            delta_grid(i+1,j) = 10.d0**(-i) * dble(j)
+        do j = 9, 1, -1
+            ! delta_grid(i+1,j) = 10.d0**(-i) * dble(j)
+            print*, j
         end do
     end do
 
-    do i = 0, k_sigma
-        do j = 1, 9
-            sigmin_grid(i+1,j) = 10.d0**(-i) * dble(j)
-        end do
-    end do
 
-    do q = 1, samples
-        do i = 1, size_delta_grid
-            do j = 1, size_sigmin_grid
-                delta = 
-                call ovo_algorithm(fobj)
-            end do
-        end do
-    end do
+
+    ! ! "Heuristics"
+    ! do q = 1, samples
+    !     do i = 1, size_delta_grid
+    !         do j = 1, size_sigmin_grid
+    !             delta = 
+    !             call ovo_algorithm(fobj)
+    !         end do
+    !     end do
+    ! end do
 
     ! print*, xk
     ! call export(xk)
