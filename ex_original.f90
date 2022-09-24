@@ -4,7 +4,7 @@ Program ex_original
     implicit none 
     
     integer :: allocerr,i,j,k,k_delta,k_sigmin,size_delta_grid,size_sigmin_grid
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,fxk,fxtrial,gaux,ti
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,aux,fxk,fxtrial,gaux,ti
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
     integer, allocatable :: Idelta(:)
     integer, dimension(3) :: optimal_ind
@@ -39,8 +39,8 @@ Program ex_original
     samples = 46
     alpha = 0.5d0
     epsilon = 1.0d-6
-    k_delta = 8
-    k_sigmin= 8
+    k_delta = 2
+    k_sigmin= 2
     size_delta_grid = 9 * (k_delta + 1)
     size_sigmin_grid = 9 * (k_sigmin + 1)
     ! delta = 1.0d-1
@@ -110,13 +110,22 @@ Program ex_original
     end do
 
     ! "Heuristics"
-    do q = 1, samples
+    q = 1
+    delta = delta_grid(1)
+    sigmin = sigmin_grid(1)
+    optimal_ind(:) = 1
+    call ovo_algorithm(fobj)
+
+    do q = 2, samples
         do i = 1, size_delta_grid
             do j = 1, size_sigmin_grid
                 delta = delta_grid(i)
                 sigmin = sigmin_grid(j)
-                call ovo_algorithm(fobj)
-                print*, i,j
+                call ovo_algorithm(aux)
+                if (aux .lt. fobj) then
+                    fobj = aux
+                    optimal_ind(:) = (/q,i,j/)
+                end if
             end do
         end do
     end do
@@ -274,6 +283,8 @@ Program ex_original
             call mount_Idelta(faux,indices,delta,Idelta,m)
     
         end do ! End of Main Algorithm
+
+        fobj = fxtrial
     end subroutine
 
     !==============================================================================
