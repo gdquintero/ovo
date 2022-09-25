@@ -39,10 +39,8 @@ Program ex_original
     samples = 46
     alpha = 0.5d0
     epsilon = 1.0d-4
-    size_delta_grid = 5
-    size_sigmin_grid = 5
-    ! delta = 1.0d-1
-    ! sigmin = 1.0d0
+    delta = 1.0d-1
+    sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
     faux(samples),indices(samples),delta_grid(size_delta_grid),sigmin_grid(size_sigmin_grid),&
@@ -88,25 +86,7 @@ Program ex_original
     xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
     ! Box-constrained? 
-    box = .true. 
-
-    if (box .eqv. .false.) then
-        l(1:n) = -1.0d+20
-        u(1:n) = 1.0d+20
-        ! u(n) = 0.0d0
-    else
-        l(1) = 0.0d0
-        l(2) = 0.0d0
-        l(3) = -1.0d+20
-        l(4) = 0.0d0
-        l(5) = -1.0d+20
-
-        u(1) = 1.0d+20
-        u(2) = 1.0d+20
-        u(3) = 0.0d0
-        u(4) = 1.0d+20
-        u(5) = 1.0d+20
-    endif
+    box = .false. 
 
     ! Discretization of delta and sigmin
     do i = 1, size_delta_grid
@@ -119,35 +99,29 @@ Program ex_original
 
     ! ! "Heuristics"
     optimal_ind(:) = 1
-    ! q = 20
-    ! call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj)
+    q = 20
+    call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj)
 
-    ! do q = q+1, samples
-    !     print*, q
-    !     do i = 1, size_delta_grid
-    !         do j = 1, size_sigmin_grid
-    !             call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
-    !             if (aux .lt. fobj) then
-    !                 fobj = aux
-    !                 optimal_ind(:) = (/q,i,j/)
-    !             end if
-    !         end do
-    !     end do
-    ! end do
+    do q = q+1, samples
+        print*, q
+        do i = 1, size_delta_grid
+            do j = 1, size_sigmin_grid
+                call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
+                if (aux .lt. fobj) then
+                    fobj = aux
+                    optimal_ind(:) = (/q,i,j/)
+                end if
+            end do
+        end do
+    end do
 
-    ! print*, optimal_ind
+    print*, optimal_ind
 
-    ! q = optimal_ind(1)
-    ! delta = delta_grid(optimal_ind(2))
-    ! sigmin = sigmin_grid(optimal_ind(3))
-
-    q = samples - 10
-    delta = 1.0d-2
-    sigmin = 1.0d0
+    q = optimal_ind(1)
+    delta = delta_grid(optimal_ind(2))
+    sigmin = sigmin_grid(optimal_ind(3))
     call ovo_algorithm(delta,sigmin,fobj)
     call export(xk)
-
-    print*, fobj
 
     CONTAINS
 
@@ -167,6 +141,24 @@ Program ex_original
         integer             :: iter,iter_sub,i,j
 
         iter = 0
+
+        if (box .eqv. .false.) then
+            l(1:n) = -1.0d+20
+            u(1:n) = 1.0d+20
+            ! u(n) = 0.0d0
+        else
+            l(1) = 0.0d0
+            l(2) = 0.0d0
+            l(3) = -1.0d+20
+            l(4) = 0.0d0
+            l(5) = -1.0d+20
+    
+            u(1) = 1.0d+20
+            u(2) = 1.0d+20
+            u(3) = 0.0d0
+            u(4) = 1.0d+20
+            u(5) = 1.0d+20
+        endif
     
         indices(:) = (/(i, i = 1, samples)/)
     
@@ -269,7 +261,7 @@ Program ex_original
             ! opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
             opt_cond(:) = xtrial(:) - xk(:)
     
-            print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
+            ! print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
     
             if (norm2(opt_cond) .le. epsilon) exit
             if (iter .ge. max_iter) exit
