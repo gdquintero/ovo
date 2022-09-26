@@ -3,11 +3,10 @@ Program ex_original
 
     implicit none 
     
-    integer :: allocerr,i,j,k,size_delta_grid,size_sigmin_grid
+    integer :: allocerr,i,j,k,size_delta_grid,size_sigmin_grid,optind_delta,optind_sigmin
     real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,aux,fxk,fxtrial,gaux,ti
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
     integer, allocatable :: Idelta(:)
-    integer, dimension(3) :: optimal_ind
     logical :: box
 
     ! COMMON INTEGERS
@@ -38,7 +37,7 @@ Program ex_original
     n = 5
     samples = 46
     alpha = 0.5d0
-    epsilon = 1.0d-4
+    epsilon = 1.0d-3
     size_delta_grid = 5
     size_sigmin_grid = 5
     ! delta = 1.0d-1
@@ -88,7 +87,7 @@ Program ex_original
     xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
     ! Box-constrained? 
-    box = .true. 
+    box = .false. 
 
     if (box .eqv. .false.) then
         l(1:n) = -1.0d+20
@@ -117,37 +116,31 @@ Program ex_original
         sigmin_grid(i) = 10.d0**(-i+3)
     end do
 
-    ! ! "Heuristics"
-    optimal_ind(:) = 1
-    ! q = 20
-    ! call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj)
-
-    ! do q = q+1, samples
-    !     print*, q
-    !     do i = 1, size_delta_grid
-    !         do j = 1, size_sigmin_grid
-    !             call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
-    !             if (aux .lt. fobj) then
-    !                 fobj = aux
-    !                 optimal_ind(:) = (/q,i,j/)
-    !             end if
-    !         end do
-    !     end do
-    ! end do
-
-    ! print*, optimal_ind
-
-    ! q = optimal_ind(1)
-    ! delta = delta_grid(optimal_ind(2))
-    ! sigmin = sigmin_grid(optimal_ind(3))
-
+    ! "Heuristics"
     q = samples - 10
-    delta = 1.0d-2
-    sigmin = 1.0d0
-    call ovo_algorithm(delta,sigmin,fobj)
-    call export(xk)
+    call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj) 
+    optind_delta = 1
+    optind_sigmin = 1
 
-    print*, fobj
+    do i = 1, size_delta_grid
+        do j = 1, size_sigmin_grid
+            call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
+            if (aux .lt. fobj) then
+                fobj = aux
+                optind_delta = i
+                optind_sigmin = j
+            end if
+        end do
+    end do
+
+    delta = delta_grid(optind_delta)
+    sigmin = sigmin_grid(optind_sigmin)
+
+
+    ! call ovo_algorithm(delta,sigmin,fobj)
+    ! call export(xk)
+
+    ! print*, fobj
 
     CONTAINS
 
