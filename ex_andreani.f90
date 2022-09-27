@@ -49,6 +49,7 @@ Program ex_original
   
     call read_data()
 
+
     ! Coded subroutines
 
     coded(1:6)  = .true.  ! evalf, evalg, evalh, evalc, evaljac, evalhc
@@ -99,7 +100,7 @@ Program ex_original
         real(kind=8),   pointer :: lambda(:)
 
         real(kind=8)        :: Mk, aux
-        integer, parameter  :: max_iter = 100000, max_iter_sub = 1000, kflag = 2
+        integer, parameter  :: max_iter = 1000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i
 
         ! Initial solution
