@@ -5,7 +5,7 @@ Program ex_original
     
     integer :: allocerr,i,j,k,size_delta_grid,size_sigmin_grid,optind_delta,optind_sigmin
     real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,aux,fxk,fxtrial,gaux,ti
-    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
+    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:),xstar(:)
     integer, allocatable :: Idelta(:)
     logical :: box
 
@@ -43,7 +43,7 @@ Program ex_original
     ! delta = 1.0d-1
     ! sigmin = 1.0d0
 
-    allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
+    allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),xstar(n-1),&
     faux(samples),indices(samples),delta_grid(size_delta_grid),sigmin_grid(size_sigmin_grid),&
     Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
 
@@ -82,9 +82,6 @@ Program ex_original
 
     nvparam   = 1
     vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
-    
-    ! Initial solution
-    xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
     ! Box-constrained? 
     box = .false. 
@@ -118,17 +115,21 @@ Program ex_original
 
     ! "Heuristics"
     q = samples - 10
-    call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj) 
-    optind_delta = 1
-    optind_sigmin = 1
 
     do i = 1, size_delta_grid
         do j = 1, size_sigmin_grid
-            call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
-            if (aux .lt. fobj) then
-                fobj = aux
+            if (i + j .eq. 2) then
+                call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj)
                 optind_delta = i
                 optind_sigmin = j
+            else 
+                call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
+                if (aux .lt. fobj) then
+                    fobj = aux
+                    optind_delta = i
+                    optind_sigmin = j
+                    xstar(:) = xk(:)
+                end if
             end if
         end do
     end do
@@ -136,11 +137,11 @@ Program ex_original
     delta = delta_grid(optind_delta)
     sigmin = sigmin_grid(optind_sigmin)
 
+    print*, delta,sigmin
 
-    ! call ovo_algorithm(delta,sigmin,fobj)
-    ! call export(xk)
+    call export(xstar)
 
-    ! print*, fobj
+    
 
     CONTAINS
 
@@ -158,6 +159,9 @@ Program ex_original
 
         integer, parameter  :: max_iter = 100000, max_iter_sub = 1000, kflag = 2
         integer             :: iter,iter_sub,i,j
+
+        ! Initial solution
+        xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
         iter = 0
     
