@@ -165,8 +165,6 @@ Program ex_original
                     hnnzmax,epsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm,   &
                     specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                     checkder,f,cnorm,snorm,nlpsupn,inform)
-            
-            alpha = 1.0d0
 
             indices(:) = (/(i, i = 1, samples)/)
 
@@ -182,8 +180,9 @@ Program ex_original
 
             ! Backtracking
             iter_sub = 1
+            alpha = 1.0d0
             do 
-                xtrial(1:n-1) = xk(:) + alpha * x(1:n-1)
+                xtrial(:) = xk(:) + alpha * x(1:n-1)
 
                 ! Scenarios
                 do i = 1, samples
