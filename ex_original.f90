@@ -40,8 +40,6 @@ Program ex_original
     epsilon = 1.0d-3
     size_delta_grid = 5
     size_sigmin_grid = 5
-    ! delta = 1.0d-1
-    ! sigmin = 1.0d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),xstar(n-1),&
     faux(samples),indices(samples),delta_grid(size_delta_grid),sigmin_grid(size_sigmin_grid),&
@@ -84,24 +82,24 @@ Program ex_original
     vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
 
     ! Box-constrained? 
-    box = .false. 
+    box = .true. 
 
     if (box .eqv. .false.) then
         l(1:n) = -1.0d+20
-        u(1:n) = 1.0d+20
-        ! u(n) = 0.0d0
+        u(1:n-1) = 1.0d+20
+        u(n) = 0.0d0
     else
-        l(1) = 0.0d0
-        l(2) = 0.0d0
-        l(3) = -1.0d+20
-        l(4) = 0.0d0
+        l(1) = -10.0d0
+        l(2) = -10.0d0
+        l(3) = -10.0d0
+        l(4) = -10.0d0
         l(5) = -1.0d+20
 
-        u(1) = 1.0d+20
-        u(2) = 1.0d+20
-        u(3) = 0.0d0
-        u(4) = 1.0d+20
-        u(5) = 1.0d+20
+        u(1) = 10.0d0
+        u(2) = 10.0d0
+        u(3) = 10.0d0
+        u(4) = 10.0d0
+        u(5) = 0.0d0
     endif
 
     ! Discretization of delta and sigmin
@@ -137,11 +135,12 @@ Program ex_original
     delta = delta_grid(optind_delta)
     sigmin = sigmin_grid(optind_sigmin)
 
-    print*, delta,sigmin
+    do q = 20, 40
+        call ovo_algorithm(delta_grid(optind_delta),sigmin_grid(optind_sigmin),fobj)
+        print*, q, xk, fobj
+    end do
 
     call export(xstar)
-
-    
 
     CONTAINS
 
@@ -263,10 +262,10 @@ Program ex_original
                 opt_cond(:) = opt_cond(:) + lambda(i) * grad(i,:)
             enddo
     
-            ! opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
-            opt_cond(:) = xtrial(:) - xk(:)
+            opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
+            ! opt_cond(:) = xtrial(:) - xk(:)
     
-            print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
+            ! print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
     
             if (norm2(opt_cond) .le. epsilon) exit
             if (iter .ge. max_iter) exit

@@ -3,12 +3,10 @@ Program ex_original
 
     implicit none 
     
-    integer :: allocerr,i,j,k,size_delta_grid,size_sigmin_grid
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,aux,fxk,fxtrial,gaux,ti
-    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:)
+    integer :: allocerr
+    real(kind=8) :: epsilon,delta,laplaciano,theta,alpha,fobj,fxk,fxtrial,gaux,ti
+    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),xaux(:)
     integer, allocatable :: Idelta(:)
-    integer, dimension(3) :: optimal_ind
-    logical :: box
 
     ! COMMON INTEGERS
     integer :: samples,q 
@@ -37,14 +35,13 @@ Program ex_original
     ! Set parameters
     n = 5
     samples = 46
-    alpha = 0.5d0
-    epsilon = 1.0d-4
-    delta = 1.0d-1
-    sigmin = 1.0d0
+    epsilon = 1.0d-3
+    delta = 0.001d0
+    laplaciano = 1.0d0
+    theta = 0.5d0
 
-    allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),&
-    faux(samples),indices(samples),delta_grid(size_delta_grid),sigmin_grid(size_sigmin_grid),&
-    Idelta(samples),nu_l(n-1),nu_u(n-1),opt_cond(n-1),stat=allocerr)
+    allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),xaux(n-1),&
+    faux(samples),indices(samples),Idelta(samples),stat=allocerr)
 
     if ( allocerr .ne. 0 ) then
         write(*,*) 'Allocation error in main program'
@@ -81,84 +78,38 @@ Program ex_original
 
     nvparam   = 1
     vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
-    
-    ! Initial solution
-    xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
-    ! Box-constrained? 
-    box = .false. 
+    q = samples - 10
 
-    ! Discretization of delta and sigmin
-    do i = 1, size_delta_grid
-        delta_grid(i) = 10.d0**(-i+1)
+    do q = 36, 36
+        call ovo_algorithm(delta,fobj)
+        ! print*, q, xk, fobj
     end do
 
-    do i = 1, size_sigmin_grid
-        sigmin_grid(i) = 10.d0**(-i+3)
-    end do
-
-    ! ! "Heuristics"
-    optimal_ind(:) = 1
-    q = 20
-    call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj)
-
-    do q = q+1, samples
-        print*, q
-        do i = 1, size_delta_grid
-            do j = 1, size_sigmin_grid
-                call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
-                if (aux .lt. fobj) then
-                    fobj = aux
-                    optimal_ind(:) = (/q,i,j/)
-                end if
-            end do
-        end do
-    end do
-
-    print*, optimal_ind
-
-    q = optimal_ind(1)
-    delta = delta_grid(optimal_ind(2))
-    sigmin = sigmin_grid(optimal_ind(3))
-    call ovo_algorithm(delta,sigmin,fobj)
-    call export(xk)
+    ! call export(xstar)
 
     CONTAINS
 
     !==============================================================================
     ! MAIN ALGORITHM
     !==============================================================================
-    subroutine ovo_algorithm(delta,sigmin,fobj)
+    subroutine ovo_algorithm(delta,fobj)
         implicit none
 
-        real(kind=8),   intent(in) :: delta, sigmin
+        real(kind=8),   intent(in) :: delta
         real(kind=8),   intent(out) :: fobj
 
         logical,        pointer :: equatn(:),linear(:)
         real(kind=8),   pointer :: lambda(:)
 
+        real(kind=8)        :: Mk, aux
         integer, parameter  :: max_iter = 100000, max_iter_sub = 1000, kflag = 2
-        integer             :: iter,iter_sub,i,j
+        integer             :: iter,iter_sub,i
+
+        ! Initial solution
+        xk(:) = (/-1.0d0,-2.0d0,1.0d0,-1.0d0/)
 
         iter = 0
-
-        if (box .eqv. .false.) then
-            l(1:n) = -1.0d+20
-            u(1:n) = 1.0d+20
-            ! u(n) = 0.0d0
-        else
-            l(1) = 0.0d0
-            l(2) = 0.0d0
-            l(3) = -1.0d+20
-            l(4) = 0.0d0
-            l(5) = -1.0d+20
-    
-            u(1) = 1.0d+20
-            u(2) = 1.0d+20
-            u(3) = 0.0d0
-            u(4) = 1.0d+20
-            u(5) = 1.0d+20
-        endif
     
         indices(:) = (/(i, i = 1, samples)/)
     
@@ -172,11 +123,19 @@ Program ex_original
     
         ! q-Order-Value function 
         fxk = faux(q)
+
+        ! print*, fxk
     
         call mount_Idelta(faux,indices,delta,Idelta,m)
     
         do
             iter = iter + 1
+
+            l(1:n-1) = (/(max(-10.0d0,xk(i)+laplaciano), i = 1, n-1)/)
+            u(1:n) = -1.0d+20
+
+            u(1:n-1) = (/(min(10.0d0,xk(i)+laplaciano), i = 1, n-1)/)
+            u(n) = 1.0d+20
     
             allocate(equatn(m),linear(m),lambda(m),grad(m,n-1),stat=allocerr)
     
@@ -201,26 +160,38 @@ Program ex_original
                 grad(i,:) = gaux * grad(i,:)
             end do
     
-            sigma = sigmin
-    
-            iter_sub = 1
             x(:) = (/xk(:),0.0d0/)
     
             ! Minimizing using ALGENCAN
-            do 
-                call algencan(myevalf,myevalg,myevalh,myevalc,myevaljac,myevalhc,   &
+            call algencan(myevalf,myevalg,myevalh,myevalc,myevaljac,myevalhc,   &
                     myevalfc,myevalgjac,myevalgjacp,myevalhl,myevalhlp,jcnnzmax,    &
                     hnnzmax,epsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm,   &
                     specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                     checkder,f,cnorm,snorm,nlpsupn,inform)
     
-                xtrial(1:n-1) = x(1:n-1)
-    
-                indices(:) = (/(i, i = 1, samples)/)
+            xtrial(1:n-1) = x(1:n-1)   
+            print*, x(n)
+
+            indices(:) = (/(i, i = 1, samples)/)
+
+            Mk = dot_product(grad(1,:),xtrial(:) - xk(:))
+
+            do i = 2, m
+                aux = dot_product(grad(i,:),xtrial(:) - xk(:))
+
+                if (aux .gt. Mk) then
+                    Mk = aux
+                end if
+            end do
+
+            ! Backtracking
+            iter_sub = 1
+            do 
+                xaux(:) = xk(:) + alpha * (xtrial(:) - xk(:)) 
     
                 ! Scenarios
                 do i = 1, samples
-                    faux(i) = fi(xtrial,i,n)
+                    faux(i) = fi(xaux,i,n)
                 end do
     
                 ! Sorting
@@ -229,46 +200,21 @@ Program ex_original
                 fxtrial = faux(q)
         
                 ! Test the sufficient descent condition
-                if (fxtrial .le. (fxk - alpha * norm2(xtrial(1:n-1) - xk(1:n-1))**2)) exit
+                if (fxtrial .le. (fxk + alpha * theta * Mk)) exit
                 if (iter_sub .ge. max_iter_sub) exit
     
-                sigma = 2.0d0 * sigma
                 iter_sub = iter_sub + 1
-            end do ! End of internal iterations
+                alpha = 0.5d0 * alpha
+            end do ! End of backtracking
     
-            opt_cond(:) = 0.0d0
-            nu_l(:) = 0.0d0
-            nu_u(:) = 0.0d0
+            ! print*, iter, iter_sub, fxtrial, Mk, m
     
-            if (box .eqv. .true.) then
-                do j = 1, n-1
-                    if (xtrial(j) .le. l(j)) then 
-                        do i = 1, m
-                            nu_l(j) = nu_l(j) + lambda(i) * grad(i,j)
-                        end do
-                    else if (xtrial(j) .ge. u(j)) then
-                        do i = 1, m
-                            nu_u(j) = nu_u(j) - lambda(i) * grad(i,j)
-                        end do
-                    end if
-                end do
-            end if
-    
-            do i = 1, m
-                opt_cond(:) = opt_cond(:) + lambda(i) * grad(i,:)
-            enddo
-    
-            ! opt_cond(:) = opt_cond(:) + nu_u(:) - nu_l(:)
-            opt_cond(:) = xtrial(:) - xk(:)
-    
-            ! print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
-    
-            if (norm2(opt_cond) .le. epsilon) exit
+            if (Mk .ge. epsilon) exit
             if (iter .ge. max_iter) exit
     
             deallocate(lambda,equatn,linear,grad)
             
-            xk(1:n-1) = xtrial(1:n-1)
+            xk(:) = xaux(:)
             fxk = fxtrial
     
             call mount_Idelta(faux,indices,delta,Idelta,m)
@@ -473,8 +419,7 @@ Program ex_original
         ! Compute ind-th constraint
         flag = 0
 
-        c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) + (sigma * 0.5d0) * &
-            (norm2(x(1:n-1) - xk(1:n-1))**2) - x(n)
+        c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) - x(n)
 
     end subroutine myevalc
 
@@ -508,7 +453,7 @@ Program ex_original
         end if
 
         jcvar(1:n) = (/(i, i = 1, n)/)
-        jcval(1:n) = (/(grad(ind,i) + sigma * (x(i) - xk(i)), i = 1, n-1), -1.0d0/)
+        jcval(1:n) = (/(grad(ind,i), i = 1, n-1), -1.0d0/)
 
     end subroutine myevaljac
 
@@ -531,17 +476,7 @@ Program ex_original
 
         flag = 0
         lmem = .false.
-    
-        hcnnz = n - 1
-    
-        if ( hcnnz .gt. lim ) then
-            lmem = .true.
-            return
-        end if
-    
-        hcrow(1:n-1) = (/(i, i = 1, n-1)/)
-        hccol(1:n-1) = (/(i, i = 1, n-1)/)
-        hcval(1:n-1) = sigma
+        hcnnz = 0
 
     end subroutine myevalhc
 
