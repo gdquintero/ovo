@@ -4,8 +4,8 @@ Program ex_original
     implicit none 
     
     integer :: allocerr
-    real(kind=8) :: epsilon,delta,laplaciano,theta,alpha,fobj,fxk,fxtrial,gaux,ti
-    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),xaux(:)
+    real(kind=8) :: epsilon,delta,theta,alpha,fobj,fxk,fxtrial,gaux,ti
+    real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),xaux(:),xk(:)
     integer, allocatable :: Idelta(:)
 
     ! COMMON INTEGERS
@@ -15,12 +15,12 @@ Program ex_original
     real(kind=8) :: sigma
 
     ! COMMON ARRAYS
-    real(kind=8),   pointer :: t(:),y(:),grad(:,:),xk(:)
+    real(kind=8),   pointer :: t(:),y(:),grad(:,:)
 
     ! COMMON BLOCKS
     common /integerData/ samples,q
     common /scalarData/ sigma
-    common /vectorData/ t,y,xk,grad
+    common /vectorData/ t,y,grad
 
     ! LOCAL SCALARS
     logical :: checkder
@@ -37,7 +37,6 @@ Program ex_original
     samples = 46
     epsilon = 1.0d-3
     delta = 0.001d0
-    laplaciano = 1.0d0
     theta = 0.5d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),xaux(n-1),&
@@ -79,12 +78,9 @@ Program ex_original
     nvparam   = 1
     vparam(1) = 'ITERATIONS-OUTPUT-DETAIL 0' 
 
-    q = samples - 10
+    q = 36
 
-    do q = 36, 36
-        call ovo_algorithm(delta,fobj)
-        ! print*, q, xk, fobj
-    end do
+    call ovo_algorithm(delta,fobj)
 
     ! call export(xstar)
 
@@ -131,10 +127,10 @@ Program ex_original
         do
             iter = iter + 1
 
-            l(1:n-1) = (/(max(-10.0d0,xk(i)+laplaciano), i = 1, n-1)/)
-            u(1:n) = -1.0d+20
+            l(1:n-1) = (/(max(-10.0d0 - xk(i), - 1.0d0), i = 1, n-1)/)
+            l(n) = -1.0d+20
 
-            u(1:n-1) = (/(min(10.0d0,xk(i)+laplaciano), i = 1, n-1)/)
+            u(1:n-1) = (/(min(10.0d0 - xk(i), + 1.0d0), i = 1, n-1)/)
             u(n) = 1.0d+20
     
             allocate(equatn(m),linear(m),lambda(m),grad(m,n-1),stat=allocerr)
@@ -145,7 +141,7 @@ Program ex_original
             end if
     
             equatn(:) = .false.
-            linear(:) = .false.
+            linear(:) = .true.
             lambda(:) = 0.0d0
     
             do i = 1, m
@@ -168,16 +164,15 @@ Program ex_original
                     hnnzmax,epsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm,   &
                     specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                     checkder,f,cnorm,snorm,nlpsupn,inform)
-    
-            xtrial(1:n-1) = x(1:n-1)   
-            print*, x(n)
+            
+            alpha = 1.0d0
 
             indices(:) = (/(i, i = 1, samples)/)
 
-            Mk = dot_product(grad(1,:),xtrial(:) - xk(:))
+            Mk = dot_product(grad(1,:),x(1:n-1))
 
             do i = 2, m
-                aux = dot_product(grad(i,:),xtrial(:) - xk(:))
+                aux = dot_product(grad(i,:),x(1:n-1))
 
                 if (aux .gt. Mk) then
                     Mk = aux
@@ -187,11 +182,11 @@ Program ex_original
             ! Backtracking
             iter_sub = 1
             do 
-                xaux(:) = xk(:) + alpha * (xtrial(:) - xk(:)) 
-    
+                xtrial(1:n-1) = xk(:) + alpha * x(1:n-1)
+
                 ! Scenarios
                 do i = 1, samples
-                    faux(i) = fi(xaux,i,n)
+                    faux(i) = fi(xtrial,i,n)
                 end do
     
                 ! Sorting
@@ -207,14 +202,14 @@ Program ex_original
                 alpha = 0.5d0 * alpha
             end do ! End of backtracking
     
-            ! print*, iter, iter_sub, fxtrial, Mk, m
+            print*, iter, iter_sub, fxtrial, abs(Mk), m
     
-            if (Mk .ge. epsilon) exit
+            if (abs(Mk) .le. epsilon) exit
             if (iter .ge. max_iter) exit
     
             deallocate(lambda,equatn,linear,grad)
             
-            xk(:) = xaux(:)
+            xk(:) = xtrial(:)
             fxk = fxtrial
     
             call mount_Idelta(faux,indices,delta,Idelta,m)
@@ -264,24 +259,6 @@ Program ex_original
                 Idelta(m) = int(indices(i))
             end if
         end do
-
-        ! do i = q, samples
-        !     if (abs(fq - f(i)) .le. delta) then
-        !         m = m + 1
-        !         Idelta(m) = int(indices(i))
-        !     else
-        !         exit
-        !     end if
-        ! end do
-
-        ! do i = q-1, 1, -1
-        !     if (abs(fq - f(i)) .le. delta) then
-        !         m = m + 1
-        !         Idelta(m) = int(indices(i))
-        !     else
-        !         exit
-        !     end if
-        ! end do
 
     end subroutine
 
@@ -419,7 +396,7 @@ Program ex_original
         ! Compute ind-th constraint
         flag = 0
 
-        c = dot_product(x(1:n-1) - xk(1:n-1),grad(ind,1:n-1)) - x(n)
+        c = dot_product(x(1:n-1),grad(ind,1:n-1)) - x(n)
 
     end subroutine myevalc
 
