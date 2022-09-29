@@ -72,7 +72,6 @@ while True:
         gaux        = model(ti,xk) - y[Idelta[i]]
         grad[i,:]   = gaux * np.array([1., ti, ti**2, ti**3])
 
-    
     # Objective function
     c[-1] = 1.
 
