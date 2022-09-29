@@ -31,8 +31,8 @@ delta = 0.001
 theta = 0.5
 sigmin = 0.1
 sigmax = 0.9
-max_iter = 10
-max_int_iter = 100
+max_iter = 1
+max_int_iter = 10
 
 t       = np.zeros(samples)
 y       = np.zeros(samples)
@@ -42,8 +42,8 @@ faux    = np.zeros(samples)
 c       = np.zeros(n)
 A       = np.zeros((samples,n))
 b       = np.zeros(samples)
-x_bounds= np.zeros((n,2))
 grad    = np.zeros((samples,n-1))
+x_bounds= [(None,None)] * n
 
 # Initial solution
 xk = np.array([-1.,-2.,1.,-1.])
@@ -80,12 +80,16 @@ while True:
         A[i,:n-1]  = grad[i,:]
         A[i,-1]    = -1.
 
-    x_bounds[:n-1,0] = np.maximum(-10. - xk,-np.ones(n-1))
-    x_bounds[:n-1,1] = np.minimum(10. - xk,np.ones(n-1))
-    x_bounds[-1,0]  = None
-    x_bounds[-1,1]  = 0.
+    # Box constraints
+    for i in range(n-1):
+        x_bounds[i] = (max(-10. - xk[i],-1.),min(10. - xk[i],1.))
 
+    x_bounds[-1] = (None,0.)
+
+    # Solve with linprog
     res = linprog(c, A_ub=A[:m,:], b_ub=b[:m], bounds=x_bounds)
+
+    print(np.dot(A[0,:n-1],res.x[:n-1]) < res.x[-1])
 
     alpha = 1.
     int_iter = 1
@@ -110,7 +114,7 @@ while True:
 
     # print(iter,int_iter)
     # print(alpha)
-    print(xk)
+    # print(xk)
 
     if abs(res.fun) <= epsilon: break
     if iter >= max_iter: break
