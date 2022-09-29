@@ -106,11 +106,12 @@ while True:
         if fxtrial <= fxk + theta * alpha * res.fun: break
         if int_iter >= max_int_iter: break
 
-        alpha = 0.5 * (sigmax - sigmin) * alpha
+        # alpha = 0.5 * alpha * (sigmax - sigmin)
+        alpha = 0.5 * alpha
         int_iter += 1
 
 
-    print(iter,int_iter,fxk,abs(res.fun))
+    # print(iter,int_iter,fxk,abs(res.fun))
 
     if abs(res.fun) <= epsilon: break
     if iter >= max_iter: break
@@ -120,4 +121,7 @@ while True:
 
     Idelta, m = mount_Idelta(faux,indices,q,delta)
 
-print(xk)
+print("Iteracoes: ",iter)
+print("Solucao: ", xk)
+print("fobj: ",fxk)
+

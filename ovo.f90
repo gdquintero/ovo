@@ -4,22 +4,18 @@ Program ex_original
     implicit none 
     
     integer :: allocerr
-    real(kind=8) :: epsilon,delta,theta,alpha,fobj,fxk,fxtrial,gaux,ti
+    real(kind=8) :: epsilon,delta,theta,alpha,fobj,fxk,fxtrial,gaux,ti,sigmin,sigmax
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),xaux(:),xk(:)
     integer, allocatable :: Idelta(:)
 
     ! COMMON INTEGERS
     integer :: samples,q 
 
-    ! COMMON SCALARS
-    real(kind=8) :: sigma
-
     ! COMMON ARRAYS
     real(kind=8),   pointer :: t(:),y(:),grad(:,:)
 
     ! COMMON BLOCKS
     common /integerData/ samples,q
-    common /scalarData/ sigma
     common /vectorData/ t,y,grad
 
     ! LOCAL SCALARS
@@ -35,9 +31,11 @@ Program ex_original
     ! Set parameters
     n = 5
     samples = 46
-    epsilon = 1.0d-3
+    epsilon = 1.0d-5
     delta = 0.001d0
     theta = 0.5d0
+    sigmin = 0.1d0
+    sigmax = 0.9d0
 
     allocate(t(samples),y(samples),x(n),xk(n-1),xtrial(n-1),l(n),u(n),xaux(n-1),&
     faux(samples),indices(samples),Idelta(samples),stat=allocerr)
@@ -166,24 +164,13 @@ Program ex_original
                     specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                     checkder,f,cnorm,snorm,nlpsupn,inform)
 
-        
-            indices(:) = (/(i, i = 1, samples)/)
-
-            Mk = dot_product(grad(1,:),x(1:n-1))
-
-            do i = 2, m
-                aux = dot_product(grad(i,:),x(1:n-1))
-
-                if (aux .gt. Mk) then
-                    Mk = aux
-                end if
-            end do
-
             ! Backtracking
             iter_sub = 1
             alpha = 1.0d0
             do 
                 xtrial(:) = xk(:) + alpha * x(1:n-1)
+
+                indices(:) = (/(i, i = 1, samples)/)
 
                 ! Scenarios
                 do i = 1, samples
@@ -196,30 +183,32 @@ Program ex_original
                 fxtrial = faux(q)
         
                 ! Test the sufficient descent condition
-                if (fxtrial .le. (fxk + alpha * theta * Mk)) exit
+                if (fxtrial .le. (fxk + alpha * theta * x(n))) exit
                 if (iter_sub .ge. max_iter_sub) exit
     
                 iter_sub = iter_sub + 1
+                ! alpha = 0.5d0 * alpha * (sigmax - sigmin)
                 alpha = 0.5d0 * alpha
             end do ! End of backtracking
     
-            ! print*, iter, iter_sub, fxtrial, abs(Mk)
+            ! print*, iter, iter_sub, fxtrial, abs(x(n))
     
-            if (abs(Mk) .le. epsilon) exit
+            if (abs(x(n)) .le. epsilon) exit
             if (iter .ge. max_iter) exit
     
             deallocate(lambda,equatn,linear,grad)
             
             xk(:) = xtrial(:)
             fxk = fxtrial
-
-            print*, fxk
     
             call mount_Idelta(faux,indices,delta,Idelta,m)
     
         end do ! End of Main Algorithm
 
         fobj = fxtrial
+        print*, "Iteracoes: ", iter
+        print*, "Solucao: ", xk
+        print*, "fobj: ", fxk
     end subroutine
 
     !==============================================================================
