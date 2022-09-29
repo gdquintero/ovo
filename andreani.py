@@ -14,7 +14,7 @@ def mount_Idelta(f,ind,q,delta):
     m = 0
     fq = f[q]
     for i in range(samples):
-        if np.abs(fq - f[i]) <= delta:
+        if abs(fq - f[i]) <= delta:
             I.append(ind[i])
             m += 1
     
@@ -86,10 +86,19 @@ while True:
 
     x_bounds[-1] = (None,0.)
 
+    print(c)
+    print()
+    print(A[:m,:])
+    print()
+    print(b[:m])
+    print()
+    print(x_bounds)
+
     # Solve with linprog
     res = linprog(c, A_ub=A[:m,:], b_ub=b[:m], bounds=x_bounds)
 
-    print(np.dot(A[0,:n-1],res.x[:n-1]) < res.x[-1])
+    # print(np.dot(grad[0,:],res.x[:n-1]) - res.x[-1] <= 0.)
+    break
 
     alpha = 1.
     int_iter = 1
