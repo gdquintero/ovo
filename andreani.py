@@ -3,9 +3,9 @@ import pandas as pd
 from scipy.optimize import linprog
 
 def model(ti,x):
-    return x[0] + x[1] * ti + x[2] * (ti**2) + x[3] * (ti**3)
+    return x[0] + (x[1] * ti) + (x[2] * (ti**2)) + (x[3] * (ti**3))
 
-def fi(x,i,y,t):
+def fi(x,i):
     res = model(t[i],x) - y[i]
     return  0.5 * res**2
 
@@ -13,6 +13,7 @@ def mount_Idelta(f,ind,q,delta):
     I = []
     m = 0
     fq = f[q]
+
     for i in range(samples):
         if abs(fq - f[i]) <= delta:
             I.append(ind[i])
@@ -26,13 +27,13 @@ df = pd.read_csv("output/original.txt",header=None, sep=" ")
 n = 5
 q = 35
 samples = df[0].size
-epsilon = 1.e-3
+epsilon = 1.e-5
 delta = 0.001
 theta = 0.5
 sigmin = 0.1
 sigmax = 0.9
-max_iter = 1
-max_int_iter = 10
+max_iter = 1000
+max_int_iter = 100
 
 t       = np.zeros(samples)
 y       = np.zeros(samples)
@@ -55,7 +56,7 @@ for i in range(samples):
 iter = 0
 
 for i in range(samples):
-    faux[i] = fi(xk,i,y,t)
+    faux[i] = fi(xk,i)
 
 indices = np.argsort(faux)
 faux = np.sort(faux)
@@ -67,7 +68,7 @@ while True:
     iter += 1
 
     for i in range(m):
-        ti          = t[indices[i]]
+        ti          = t[Idelta[i]]
         gaux        = model(ti,xk) - y[Idelta[i]]
         grad[i,:]   = gaux * np.array([1., ti, ti**2, ti**3])
 
@@ -86,19 +87,8 @@ while True:
 
     x_bounds[-1] = (None,0.)
 
-    print(c)
-    print()
-    print(A[:m,:])
-    print()
-    print(b[:m])
-    print()
-    print(x_bounds)
-
     # Solve with linprog
     res = linprog(c, A_ub=A[:m,:], b_ub=b[:m], bounds=x_bounds)
-
-    # print(np.dot(grad[0,:],res.x[:n-1]) - res.x[-1] <= 0.)
-    break
 
     alpha = 1.
     int_iter = 1
@@ -108,7 +98,7 @@ while True:
         xtrial = xk + alpha * res.x[:n-1]
 
         for i in range(samples):
-            faux[i] = fi(xtrial,i,y,t)
+            faux[i] = fi(xtrial,i)
 
         indices = np.argsort(faux)
         faux    = np.sort(faux)
@@ -121,9 +111,7 @@ while True:
         int_iter += 1
 
 
-    # print(iter,int_iter)
-    # print(alpha)
-    # print(xk)
+    print(iter,int_iter,fxk,abs(res.fun))
 
     if abs(res.fun) <= epsilon: break
     if iter >= max_iter: break
@@ -132,3 +120,5 @@ while True:
     fxk = fxtrial
 
     Idelta, m = mount_Idelta(faux,indices,q,delta)
+
+print(xk)

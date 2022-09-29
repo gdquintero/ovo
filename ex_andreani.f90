@@ -120,7 +120,6 @@ Program ex_original
     
         ! q-Order-Value function 
         fxk = faux(q)
-
     
         call mount_Idelta(faux,indices,delta,Idelta,m)
         
@@ -168,7 +167,6 @@ Program ex_original
                     checkder,f,cnorm,snorm,nlpsupn,inform)
 
         
-
             indices(:) = (/(i, i = 1, samples)/)
 
             Mk = dot_product(grad(1,:),x(1:n-1))
