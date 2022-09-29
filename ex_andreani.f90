@@ -100,7 +100,7 @@ Program ex_original
         real(kind=8),   pointer :: lambda(:)
 
         real(kind=8)        :: Mk, aux
-        integer, parameter  :: max_iter = 100, max_iter_sub = 100, kflag = 2
+        integer, parameter  :: max_iter = 1000, max_iter_sub = 100, kflag = 2
         integer             :: iter,iter_sub,i
 
         ! Initial solution
@@ -120,6 +120,7 @@ Program ex_original
     
         ! q-Order-Value function 
         fxk = faux(q)
+
     
         call mount_Idelta(faux,indices,delta,Idelta,m)
         
@@ -166,9 +167,7 @@ Program ex_original
                     specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded,    &
                     checkder,f,cnorm,snorm,nlpsupn,inform)
 
-            print*, f
-
-            stop
+        
 
             indices(:) = (/(i, i = 1, samples)/)
 
@@ -206,7 +205,7 @@ Program ex_original
                 alpha = 0.5d0 * alpha
             end do ! End of backtracking
     
-            print*, iter, iter_sub, fxtrial, abs(Mk)
+            ! print*, iter, iter_sub, fxtrial, abs(Mk)
     
             if (abs(Mk) .le. epsilon) exit
             if (iter .ge. max_iter) exit
@@ -215,6 +214,8 @@ Program ex_original
             
             xk(:) = xtrial(:)
             fxk = fxtrial
+
+            print*, fxk
     
             call mount_Idelta(faux,indices,delta,Idelta,m)
     

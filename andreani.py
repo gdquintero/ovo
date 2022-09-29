@@ -1,16 +1,13 @@
-from calendar import c
-from re import U
 import numpy as np
 import pandas as pd
-from regex import B
 from scipy.optimize import linprog
 
-def model(t,a,b,c,d):
-    return a + b * t + c * (t**2) + d * (t**3)
+def model(ti,x):
+    return x[0] + x[1] * ti + x[2] * (ti**2) + x[3] * (ti**3)
 
 def fi(x,i,y,t):
-    res = model(t[i],*x) - y[i]
-    return 0.5 * (res**2)
+    res = model(t[i],x) - y[i]
+    return  0.5 * res**2
 
 def mount_Idelta(f,ind,q,delta):
     I = []
@@ -27,16 +24,19 @@ df = pd.read_csv("output/original.txt",header=None, sep=" ")
 
 # Set parameters
 n = 5
+q = 35
 samples = df[0].size
 epsilon = 1.e-3
 delta = 0.001
 theta = 0.5
-q = 35
+sigmin = 0.1
+sigmax = 0.9
+max_iter = 10
+max_int_iter = 100
 
 t       = np.zeros(samples)
 y       = np.zeros(samples)
 indices = np.zeros(samples,dtype=int)
-xk      = np.array([-1.,-2.,1.,-1.])
 xtrial  = np.zeros(n-1)
 faux    = np.zeros(samples)
 c       = np.zeros(n)
@@ -44,6 +44,9 @@ A       = np.zeros((samples,n))
 b       = np.zeros(samples)
 x_bounds= np.zeros((n,2))
 grad    = np.zeros((samples,n-1))
+
+# Initial solution
+xk = np.array([-1.,-2.,1.,-1.])
 
 for i in range(samples):
     t[i] = df[0].values[i]
@@ -56,6 +59,7 @@ for i in range(samples):
 
 indices = np.argsort(faux)
 faux = np.sort(faux)
+fxk = faux[q]
 
 Idelta, m = mount_Idelta(faux,indices,q,delta)
 
@@ -64,29 +68,54 @@ while True:
 
     for i in range(m):
         ti          = t[indices[i]]
-        gaux        = model(ti,*xk) - y[Idelta[i]]
-        grad[i,0]   = 1.0
-        grad[i,1]   = ti
-        grad[i,2]   = ti**2
-        grad[i,3]   = ti**3
-        grad[i,:]   = gaux * grad[i,:]
+        gaux        = model(ti,xk) - y[Idelta[i]]
+        grad[i,:]   = gaux * np.array([1., ti, ti**2, ti**3])
 
-
+    
     # Objective function
-    c[n-1] = 1.
+    c[-1] = 1.
 
     # Constraints matrix
     for i in range(m):
-        A[i,:n-1]   = grad[i,:]
-        A[i,n-1]    = -1.
+        A[i,:n-1]  = grad[i,:]
+        A[i,-1]    = -1.
 
     x_bounds[:n-1,0] = np.maximum(-10. - xk,-np.ones(n-1))
     x_bounds[:n-1,1] = np.minimum(10. - xk,np.ones(n-1))
-    x_bounds[n-1,0] = -np.inf
-    x_bounds[n-1,1] = np.inf
+    x_bounds[-1,0]  = None
+    x_bounds[-1,1]  = 0.
 
     res = linprog(c, A_ub=A[:m,:], b_ub=b[:m], bounds=x_bounds)
 
-    print(res.fun)
+    alpha = 1.
+    int_iter = 1
 
-    break
+    # Backtracking
+    while True:
+        xtrial = xk + alpha * res.x[:n-1]
+
+        for i in range(samples):
+            faux[i] = fi(xtrial,i,y,t)
+
+        indices = np.argsort(faux)
+        faux    = np.sort(faux)
+        fxtrial = faux[q]
+        
+        if fxtrial <= fxk + theta * alpha * res.fun: break
+        if int_iter >= max_int_iter: break
+
+        alpha = 0.5 * (sigmax - sigmin) * alpha
+        int_iter += 1
+
+
+    # print(iter,int_iter)
+    # print(alpha)
+    print(xk)
+
+    if abs(res.fun) <= epsilon: break
+    if iter >= max_iter: break
+
+    xk = xtrial
+    fxk = fxtrial
+
+    Idelta, m = mount_Idelta(faux,indices,q,delta)
