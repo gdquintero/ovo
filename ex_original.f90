@@ -3,8 +3,8 @@ Program ex_original
 
     implicit none 
     
-    integer :: allocerr,i,j,k,size_delta_grid,size_sigmin_grid,optind_delta,optind_sigmin
-    real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,aux,fxk,fxtrial,gaux,ti
+    integer :: allocerr,i,j,k,size_delta_grid,size_sigmin_grid,optind_delta,optind_sigmin,n_iter,n_int_iter
+    real(kind=8) :: alpha,epsilon,delta,sigmin,fobj,aux,fxk,fxtrial,gaux,ti,norm_grad
     real(kind=8), allocatable :: xtrial(:),faux(:),indices(:),nu_l(:),nu_u(:),opt_cond(:),delta_grid(:),sigmin_grid(:),xstar(:)
     integer, allocatable :: Idelta(:)
     logical :: box
@@ -117,11 +117,11 @@ Program ex_original
     do i = 1, size_delta_grid
         do j = 1, size_sigmin_grid
             if (i + j .eq. 2) then
-                call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj)
+                call ovo_algorithm(delta_grid(1),sigmin_grid(1),fobj,norm_grad)
                 optind_delta = i
                 optind_sigmin = j
             else 
-                call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux)
+                call ovo_algorithm(delta_grid(i),sigmin_grid(j),aux,norm_grad)
                 if (aux .lt. fobj) then
                     fobj = aux
                     optind_delta = i
@@ -135,10 +135,18 @@ Program ex_original
     delta = delta_grid(optind_delta)
     sigmin = sigmin_grid(optind_sigmin)
 
-    do q = 20, 40
-        call ovo_algorithm(delta_grid(optind_delta),sigmin_grid(optind_sigmin),fobj)
-        print*, q, xk, fobj
+    Open(Unit = 100, File = "output/table_severalq.txt", ACCESS = "SEQUENTIAL")
+
+    do q = 30, 40
+        call ovo_algorithm(delta_grid(optind_delta),sigmin_grid(optind_sigmin),fobj,norm_grad)
+        print*, q, xk, fobj, norm_grad
+        write(100,10) q,'&',xk(1),'&',xk(2),'&',xk(3),'&',xk(4),'&',fobj,'&',n_iter,'\\'
+        10 format (I2,1X,A1,1X,F10.6,1X,A1,1X,F10.6,1X,A1,1X,F10.6,1X,A1,1X,F10.6,1X,A1,1X,F10.6,1X,A1,1X,I3,1X,A2)
     end do
+
+    close(100)
+
+    print*,xstar
 
     call export(xstar)
 
@@ -147,16 +155,16 @@ Program ex_original
     !==============================================================================
     ! MAIN ALGORITHM
     !==============================================================================
-    subroutine ovo_algorithm(delta,sigmin,fobj)
+    subroutine ovo_algorithm(delta,sigmin,fobj,norm_grad)
         implicit none
 
         real(kind=8),   intent(in) :: delta, sigmin
-        real(kind=8),   intent(out) :: fobj
+        real(kind=8),   intent(out) :: fobj,norm_grad
 
         logical,        pointer :: equatn(:),linear(:)
         real(kind=8),   pointer :: lambda(:)
 
-        integer, parameter  :: max_iter = 100000, max_iter_sub = 1000, kflag = 2
+        integer, parameter  :: max_iter = 10000, max_iter_sub = 1000, kflag = 2
         integer             :: iter,iter_sub,i,j
 
         ! Initial solution
@@ -178,6 +186,9 @@ Program ex_original
         fxk = faux(q)
     
         call mount_Idelta(faux,indices,delta,Idelta,m)
+
+        n_iter = 0
+        n_int_iter = 0
     
         do
             iter = iter + 1
@@ -267,19 +278,21 @@ Program ex_original
     
             ! print*, iter, iter_sub, fxtrial, norm2(opt_cond), m
     
-            if (norm2(opt_cond) .le. epsilon) exit
+            if (norm2(opt_cond) .lt. epsilon) exit
             if (iter .ge. max_iter) exit
     
             deallocate(lambda,equatn,linear,grad)
             
             xk(1:n-1) = xtrial(1:n-1)
             fxk = fxtrial
+            n_iter = iter
     
             call mount_Idelta(faux,indices,delta,Idelta,m)
     
         end do ! End of Main Algorithm
 
         fobj = fxtrial
+        norm_grad = norm2(opt_cond)
     end subroutine
 
     !==============================================================================

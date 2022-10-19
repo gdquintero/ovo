@@ -24,6 +24,6 @@ with open("output/original.txt",'w') as f:
     for i in range(t_data.size):
         f.write("%f %f\n" % (t_data[i],y_data[i]))
 
-plt.plot(t_data,y)
+# plt.plot(t_data,y)
 plt.plot(t_data,y_data,"o")
 plt.show()

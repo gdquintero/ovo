@@ -56,6 +56,9 @@ else:
 
 t = np.linspace(-1.,3.5,1000)
 
-# plt.plot(df[0],df[1],"*")
+for i in range(4):
+    print(round(popt[i],6))
+
+# plt.plot(df[0],df[1],"o")
 # plt.plot(t,func_original(t,*popt))
 # plt.show()

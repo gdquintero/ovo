@@ -182,7 +182,7 @@ else:
             )
 
 
-# plt.savefig("fig",format='pdf')    
+plt.savefig("ovo_lq.pdf",bbox_inches = "tight")    
 plt.show()
 # plt.close()
 
